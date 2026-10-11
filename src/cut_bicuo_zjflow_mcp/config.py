@@ -5,13 +5,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-APP_DIR = Path(os.environ.get("CUOHUATANG_HOME", Path.home() / ".cuohuatang"))
+APP_DIR = Path(os.environ.get("CUT_BICUO_ZJFLOW_HOME", Path.home() / ".cut-bicuo-zjflow"))
 
 # vault：markdown 唯一真相源，Obsidian 可直接打开
-VAULT_PATH = Path(os.environ.get("CUOHUATANG_VAULT_PATH", APP_DIR / "vault"))
+VAULT_PATH = Path(os.environ.get("CUT_BICUO_ZJFLOW_VAULT_PATH", APP_DIR / "vault"))
 
 # 检索索引（SQLite FTS5，可重建）
-INDEX_PATH = Path(os.environ.get("CUOHUATANG_INDEX_PATH", APP_DIR / "index.sqlite"))
+INDEX_PATH = Path(os.environ.get("CUT_BICUO_ZJFLOW_INDEX_PATH", APP_DIR / "index.sqlite"))
 
 # vault 子目录（固定命名，Obsidian 友好）
 VAULT_DIRS = {

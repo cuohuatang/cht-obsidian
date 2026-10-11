@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from cuohuatang_mcp.server import mcp
+from cut_bicuo_zjflow_mcp.server import mcp
 
 
 def test_all_tools_registered() -> None:

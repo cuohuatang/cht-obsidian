@@ -6,7 +6,7 @@ V0.2 核心升级：`cm_skill_propose` 不再输出空模板，而是从 vault �
 （记忆/踩坑/纠错/交接）中**真实提炼有序步骤、规则、失败处理与来源双链**，
 生成可直接安装的 SKILL.md 草稿。
 
-精华移植（不依赖 entire CLI，用 cuohuatang 自身数据驱动）：
+精华移植（不依赖 entire CLI，用 cut-bicuo-zjflow 自身数据驱动）：
 - 先识别可复用行为，用证据（记忆/踩坑/纠错/交接记录）而非机械转换
 - 只沉淀可复用工作流与规则，不含一次性内容、密钥、隐私
 - 草稿先展示、不直接写文件；写文件必须用户确认；推荐跨 Agent 路径 ~/.agents/skills/<name>/SKILL.md
@@ -112,7 +112,7 @@ def propose(target: str, tags: list[str] | None = None) -> dict[str, Any]:
 name: {skill_name}
 description: {description}
 tags: [{', '.join(tags or [])}]
-source: cuohuatang-mcp skillcraft（静默提炼）
+source: cut-bicuo-zjflow-mcp skillcraft（静默提炼）
 ---
 
 # {skill_name}

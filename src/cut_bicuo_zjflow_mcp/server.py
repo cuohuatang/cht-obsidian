@@ -1,4 +1,4 @@
-"""cuohuatang-mcp 服务器入口：MCPServer 注册全部 18 个 cm_ 工具（V0.2）。"""
+"""cut-bicuo-zjflow-mcp 服务器入口：MCPServer 注册全部 18 个 cm_ 工具（V0.2）。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from . import __version__
 from .modules import corrections, handoff, lessons, memory, obsidian, skillcraft, summarize
 
 mcp = MCPServer(
-    name="cuohuatang-mcp",
+    name="cut-bicuo-zjflow-mcp",
     instructions=(
         "一体化记忆系统：自动记忆、自动总结、踩坑本(errlore式)、纠错台账(AgentRecall式)、"
         "Obsidian 嫁接、会话交接(session-handoff式)、技能沉淀(session-to-skill式)。"

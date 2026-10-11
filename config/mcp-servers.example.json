@@ -1,11 +1,11 @@
 {
   "mcpServers": {
-    "cuohuatang": {
+    "cut-bicuo-zjflow": {
       "command": "uvx",
-      "args": ["cuohuatang-mcp"],
+      "args": ["cut-bicuo-zjflow-mcp"],
       "env": {
-        "CUOHUATANG_VAULT_PATH": "D:/Obsidian/你的库/vault",
-        "CUOHUATANG_INDEX_PATH": "D:/Obsidian/你的库/index.sqlite"
+        "CUT_BICUO_ZJFLOW_VAULT_PATH": "D:/Obsidian/你的库/vault",
+        "CUT_BICUO_ZJFLOW_INDEX_PATH": "D:/Obsidian/你的库/index.sqlite"
       }
     }
   }

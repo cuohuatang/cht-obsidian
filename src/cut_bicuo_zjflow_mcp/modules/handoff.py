@@ -1,6 +1,6 @@
 """⑥ 会话交接模块（源自 squidllee/session-handoff 精华）：六段式交接 + 自动接手。
 
-精华移植（不依赖 entire CLI，用 cuohuatang 自身数据驱动）：
+精华移植（不依赖 entire CLI，用 cut-bicuo-zjflow 自身数据驱动）：
 - 六段式交接结构：任务概览/当前状态/重要发现/下一步/需保留上下文/未回答问题
 - 公告行标识来源 Agent；未回答问题必须转问用户、不得默认
 - 无未答问题时，新 Agent 直接接手干活，不重复解释、不问许可

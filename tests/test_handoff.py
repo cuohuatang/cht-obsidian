@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from cuohuatang_mcp import config
-from cuohuatang_mcp.modules import handoff
-from cuohuatang_mcp.storage import vault
+from cut_bicuo_zjflow_mcp import config
+from cut_bicuo_zjflow_mcp.modules import handoff
+from cut_bicuo_zjflow_mcp.storage import vault
 
 
 @pytest.fixture()

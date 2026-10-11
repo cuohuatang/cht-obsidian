@@ -1,16 +1,16 @@
-# cuohuatang-mcp
+# cut-bicuo-zjflow-mcp
 
 一体化 MCP 服务器：**自动记忆 + 自动总结 + 踩坑本(errlore式) + 纠错台账(AgentRecall式) + Obsidian 嫁接(obsidian-mcp式) + 会话交接(session-handoff式) + 技能沉淀(session-to-skill式)**。
 免费、免 API key、纯本地，一套工具接入 Claude Code / Cursor / OpenClaw / Hermes / Codex 等所有 MCP 客户端。
 
-> 当前状态：**V0.2 已发布**（GitHub 公开仓库 `cuohuatang/cuohuatang-mcp`，tag v0.2.0）。完整设计见 [DESIGN.md](DESIGN.md)。
+> 当前状态：**V0.2 已发布**（GitHub 公开仓库 `cuohuatang/cut-bicuo-zjflow-mcp`，tag v0.2.0）。完整设计见 [DESIGN.md](DESIGN.md)。
 > V0.2 核心：**静默提炼工作方式/工作流并提示生成 skill**——`cm_skill_propose` 从历史记录真实提炼步骤、规则、失败处理与来源双链，生成可安装 SKILL.md 草稿。
 
 ## 快速开始
 
 ```bash
 pip install -e ".[dev]"
-cuohuatang-mcp --help        # CLI 入口
+cut-bicuo-zjflow-mcp --help        # CLI 入口
 python -m pytest -q          # 跑测试（13 项全过）
 ```
 
@@ -18,10 +18,10 @@ python -m pytest -q          # 跑测试（13 项全过）
 
 ```bash
 # 方式一：源码直接跑
-mcp run src/cuohuatang_mcp/server.py
+mcp run src/cut_bicuo_zjflow_mcp/server.py
 
 # 方式二（发版后）：从 PyPI 拉取
-uvx cuohuatang-mcp
+uvx cut-bicuo-zjflow-mcp
 ```
 
 ## 接入（所有 Agent 同一份 JSON）
@@ -29,18 +29,18 @@ uvx cuohuatang-mcp
 ```json
 {
   "mcpServers": {
-    "cuohuatang": {
+    "cut-bicuo-zjflow": {
       "command": "uvx",
-      "args": ["cuohuatang-mcp"],
-      "env": { "CUOHUATANG_VAULT_PATH": "D:/Obsidian/你的库/vault" }
+      "args": ["cut-bicuo-zjflow-mcp"],
+      "env": { "CUT_BICUO_ZJFLOW_VAULT_PATH": "D:/Obsidian/你的库/vault" }
     }
   }
 }
 ```
 
-Claude Code：`claude mcp add cuohuatang -- uvx cuohuatang-mcp`，或写入 `.mcp.json`。
+Claude Code：`claude mcp add cut-bicuo-zjflow -- uvx cut-bicuo-zjflow-mcp`，或写入 `.mcp.json`。
 
-环境变量均可编辑：`CUOHUATANG_HOME`（默认 `~/.cuohuatang`）、`CUOHUATANG_VAULT_PATH`、`CUOHUATANG_INDEX_PATH`。
+环境变量均可编辑：`CUT_BICUO_ZJFLOW_HOME`（默认 `~/.cut-bicuo-zjflow`）、`CUT_BICUO_ZJFLOW_VAULT_PATH`、`CUT_BICUO_ZJFLOW_INDEX_PATH`。
 
 ## 工具一览（18 个）
 
@@ -71,13 +71,13 @@ Claude Code：`claude mcp add cuohuatang -- uvx cuohuatang-mcp`，或写入 `.mc
 ## 数据（Obsidian 唯一真相源）
 
 ```
-~/.cuohuatang/vault/           ← markdown 真相源（Obsidian 直接打开）
+~/.cut-bicuo-zjflow/vault/           ← markdown 真相源（Obsidian 直接打开）
 ├── 01-流水账/YYYY-MM-DD.md    ← 记忆
 ├── 02-踩坑本/<slug>.md        ← 踩坑本（errlore 式，含 [[双链]] 回源）
 ├── 03-纠错台账/<slug>.md      ← 纠错台账（AgentRecall 式，含 [[双链]] 回源）
 ├── 04-经验总结/<slug>.md      ← 自动总结
 └── 05-交接/<date>-<slug>.md   ← 六段式会话交接（V0.2）
-~/.cuohuatang/index.sqlite     ← 检索索引（FTS5 + 向量缓存，可重建）
+~/.cut-bicuo-zjflow/index.sqlite     ← 检索索引（FTS5 + 向量缓存，可重建）
 ```
 
 双链约定：`cm_lesson_add(..., links=["01-流水账/2026-10-09"])`、`cm_correction_log(..., links=[...])` → 写入 frontmatter 并在正文渲染 `[[...]]`，Obsidian 图谱互通。

@@ -16,7 +16,7 @@ htmlcov/
 .ruff_cache/
 
 # 本地数据（默认 vault 与索引）
-.cuohuatang/
+.cut-bicuo-zjflow/
 
 # IDE / 系统
 .idea/
