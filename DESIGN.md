@@ -1,8 +1,8 @@
 # cut-obsidian-mcp 设计文档（V0.3 开发完成）
 
-> 状态：**V0.3 开发完成**（26 工具；GitHub 仓库 `cuohuatang/cut-obsidian-mcp`，tag v0.3.0 待推送）
+> 状态：**V0.3 开发完成**（26 工具；GitHub 仓库 `cuohuatang/cht-obsidian-mcp`，tag v0.3.0 待推送）
 > 技术栈：Python 3.10+（`mcp>=2.0`，MCPServer API）
-> 目标仓库：`cuohuatang/cut-obsidian-mcp`（GitHub 公开）
+> 目标仓库：`cuohuatang/cht-obsidian-mcp`（GitHub 公开）
 > 许可：MIT
 > V0.2 核心：**静默提炼工作方式/工作流并提示生成 skill**（skillcraft 从历史记录真实提炼步骤、规则、失败处理与来源双链）
 > V0.3 核心：**第二大脑 + GitHub 私有仓库实时同步**（多 Agent 分空间、后台自动消化管线、MOC 导航、Obsidian 开机自动拉取）

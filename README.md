@@ -3,7 +3,7 @@
 一体化 **第二大脑** MCP 服务器：**自动记忆 + 自动总结 + 踩坑本(errlore式) + 纠错台账(AgentRecall式) + Obsidian 嫁接(obsidian-mcp式) + 会话交接(session-handoff式) + 技能沉淀(session-to-skill式) + GitHub 私有仓库实时同步**。
 免费、免 API key、纯本地，一套工具接入所有支持 MCP 的 Agent（Claude Code / Cursor / Codex / OpenCode / Gemini CLI / 豆包工作台等）。
 
-> 当前状态：**V0.3 已开发完成**（26 工具，GitHub 仓库 `cuohuatang/cut-obsidian-mcp`，tag v0.3.0）。
+> 当前状态：**V0.3 已开发完成**（26 工具，GitHub 仓库 `cuohuatang/cht-obsidian-mcp`，tag v0.3.0）。
 > V0.3 核心 = **第二大脑 + 云端镜像**：智能体工作时后台自动消化其各分类项目 → 提炼/总结/萃取成工作流 → 打标签 → 双链 → 实时上传 GitHub 私有仓库 → 本地 Obsidian 开机经 obsidian-git 自动拉取。完整设计见 [DESIGN.md](DESIGN.md)，版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 快速开始
