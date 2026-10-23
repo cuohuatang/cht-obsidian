@@ -17,10 +17,13 @@ def log(
     severity: str = "medium",
     model: str | None = None,
     links: list[str] | None = None,
+    agent: str | None = None,
+    category: str | None = None,
 ) -> dict[str, Any]:
     """每次用户纠正即结构化记录（严重度/证据）。
 
     links：Obsidian 双链回源列表（双链约定，见 DESIGN.md）。
+    agent / category：来源智能体与分类项目（第二大脑按 Agent 分空间）。
     """
     note_id = f"cor-{uuid.uuid4().hex[:12]}"
     title = correction.strip().splitlines()[0][:40]
@@ -34,6 +37,8 @@ def log(
         "model": model or "any",
         "status": "active",  # active → verified / superseded
         "links": links or [],
+        "agent": agent,
+        "category": category,
     }
     body = f"## 纠正\n{correction}\n\n## 证据/触发场景\n{evidence or '（待补充）'}\n\n## 是否生效\n待验证"
     if links:

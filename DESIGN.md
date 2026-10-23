@@ -1,10 +1,11 @@
-# cut-bicuo-zjflow-mcp 设计文档（V0.2 发布版）
+# cut-bicuo-zjflow-mcp 设计文档（V0.3 开发完成）
 
-> 状态：**V0.2 已发布**（GitHub 公开仓库 `cuohuatang/cut-bicuo-zjflow-mcp`，tag v0.2.0）
+> 状态：**V0.3 开发完成**（26 工具；GitHub 仓库 `cuohuatang/cut-bicuo-zjflow-mcp`，tag v0.3.0 待推送）
 > 技术栈：Python 3.10+（`mcp>=2.0`，MCPServer API）
 > 目标仓库：`cuohuatang/cut-bicuo-zjflow-mcp`（GitHub 公开）
 > 许可：MIT
 > V0.2 核心：**静默提炼工作方式/工作流并提示生成 skill**（skillcraft 从历史记录真实提炼步骤、规则、失败处理与来源双链）
+> V0.3 核心：**第二大脑 + GitHub 私有仓库实时同步**（多 Agent 分空间、后台自动消化管线、MOC 导航、Obsidian 开机自动拉取）
 
 ---
 
@@ -280,3 +281,10 @@ V0.2 共 **13 项单元测试全过** + 端到端 stdio 冒烟（18 工具注册
 - **⑦ 技能沉淀（session-to-skill / ritual 式，V0.2 核心）**：`cm_skill_suggest` 按主题聚类，同一主题≥2 次自动提示"需要我把『×××』静默提炼成一个 skill 吗？"；`cm_skill_propose` 从历史记录**真实提炼**工作流步骤/规则/失败处理/来源双链，生成 SKILL.md 草稿（只展示不写盘，推荐跨 Agent 路径 `~/.agents/skills/<name>/SKILL.md`）。
 - 注：用户点名的 "ritual" 在 squidllee/skills 仓库中无独立同名技能，"挖重复工作流 + 自动提示生成 skill" 对应 **session-to-skill**（已完整读取并按其精华实现）。
 - 静默提炼触发时机（写入 AGENT 一体化提示词）：每次会话结束 → `cm_summarize` 沉淀 → `cm_skill_suggest` 检查重复工作流 → 命中即主动询问用户是否生成 skill。
+
+## 附录 B：V0.3 增量说明（第二大脑 + GitHub 私有仓库实时同步）
+
+- **⑧ GitHub 私有仓库同步（4 工具）**：`cm_github_setup(repo, token, branch)` 把 token 写入本地 0600 `config.json`（也可用环境变量 `CUT_BICUO_ZJFLOW_GITHUB_REPO/TOKEN/BRANCH`）；`cm_github_push` 将 vault 全部增量 commit+push 到私有仓库（`https://x-access-token:<token>@github.com/<repo>.git`，subprocess git，无额外依赖）；`cm_github_pull` 拉取合并；`cm_github_status` 返回本地待推送/远端待拉取计数。**全部 git 输出经脱敏后才返回，token 绝不外泄。**
+- **⑨ 第二大脑消化管线（4 工具）**：`cm_brain_process(agent, project, since_days)` 一键消化——收集 01/02/03 目录窗口内未消化素材（按 `agent` 隔离）→ 按共同标签聚类 → 复用 skillcraft 提炼器提取步骤/规则/失败处理 → 生成 `04-经验总结/<date>-<主题>.md` 工作流页（frontmatter 含 `type/category/status/confidence/knowledge_expire_date=+180天/last_updated/source/tags`，正文 `[[相对路径|标题]]` 双链回源）→ 原素材打"已消化"标签并追加双链 → 更新 `06-第二大脑/<agent>/MOC.md` 导航；`cm_brain_finalize(agent, push)` 会话终结一键 = 周总结 + 技能建议 + 消化 + 实时上传；`cm_brain_moc` / `cm_brain_status` 导航与统计。
+- **多 Agent 分空间**：`cm_memory_save / cm_lesson_add / cm_correction_log` 新增可选 `agent`（来源智能体）与 `category`（分类项目）参数，第二大脑按 Agent 隔离、按项目聚合。
+- **闭环（用户本次迭代目标）**：任意 Agent 接入 → 会话中带 `agent/category` 记录 → 会话结束 `cm_brain_finalize` → 自动总结/建议/消化 → 实时 push GitHub 私有仓库 → 本地 Obsidian 装 obsidian-git 插件开机自动 pull → 双链图谱即见。全部本地规则、可审计、token 零外泄。

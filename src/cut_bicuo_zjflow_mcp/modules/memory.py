@@ -12,8 +12,18 @@ from ..storage import vault
 _KIND = "memory"
 
 
-def save(content: str, title: str | None = None, tags: list[str] | None = None) -> dict[str, Any]:
-    """记录一次会话事实/上下文，写入 01-流水账（每条独立文件，不覆盖历史）。"""
+def save(
+    content: str,
+    title: str | None = None,
+    tags: list[str] | None = None,
+    agent: str | None = None,
+    category: str | None = None,
+) -> dict[str, Any]:
+    """记录一次会话事实/上下文，写入 01-流水账（每条独立文件，不覆盖历史）。
+
+    agent：来源智能体标识（如 claude-code / codex / doubao），第二大脑按 Agent 分空间。
+    category：分类项目名，供 digest 按项目聚合。
+    """
     title = title or content.strip().splitlines()[0][:40]
     note_id = f"mem-{uuid.uuid4().hex[:12]}"
     rel = f"{VAULT_DIRS['memory']}/{datetime.now().strftime('%Y-%m-%d-%H%M%S')}-{note_id[4:10]}.md"
@@ -23,6 +33,8 @@ def save(content: str, title: str | None = None, tags: list[str] | None = None) 
         "type": _KIND,
         "tags": tags or [],
         "model": "any",
+        "agent": agent,
+        "category": category,
     }
     return vault.write_note(rel, content, meta, overwrite=False)
 

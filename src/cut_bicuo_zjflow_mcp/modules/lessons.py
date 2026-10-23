@@ -17,11 +17,14 @@ def add(
     model: str | None = None,
     severity: str = "medium",
     links: list[str] | None = None,
+    agent: str | None = None,
+    category: str | None = None,
 ) -> dict[str, Any]:
     """文件式记录一条教训到 02-踩坑本。
 
     links：Obsidian 双链回源列表（如 ["01-流水账/2026-10-09", "02-踩坑本/其他教训"]），
     渲染为正文底部 [[双链]]，与 Obsidian 图谱互通（双链约定，见 DESIGN.md）。
+    agent / category：来源智能体与分类项目（第二大脑按 Agent 分空间）。
     """
     note_id = f"les-{uuid.uuid4().hex[:12]}"
     title = lesson.strip().splitlines()[0][:40]
@@ -34,6 +37,8 @@ def add(
         "model": model or "any",  # errlore 式：针对哪个模型的信任度
         "severity": severity,
         "links": links or [],
+        "agent": agent,
+        "category": category,
     }
     body = f"## 教训\n{lesson}\n\n## 触发场景\n（待补充 evidence）"
     if links:
