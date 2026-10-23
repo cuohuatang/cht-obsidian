@@ -50,7 +50,7 @@ def inject(query: str, top_k: int = 3) -> dict[str, Any]:
     """开工前注入：返回相关教训的现成上下文文本块（含模型标注）。"""
     hits = vault.search(query, kind=_KIND, top_k=top_k)
     block = (
-        "【已知教训 · cut-bicuo-zjflow 踩坑本】\n"
+        "【已知教训 · cut-obsidian 踩坑本】\n"
         + "\n".join(f"- [{h['title']}] (模型:{h['model']} 相关度:{h['score']})" for h in hits)
         if hits
         else "【已知教训】无相关记录"

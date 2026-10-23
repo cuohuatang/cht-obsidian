@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from cut_bicuo_zjflow_mcp import config
-from cut_bicuo_zjflow_mcp.storage import vault
+from cut_obsidian_mcp import config
+from cut_obsidian_mcp.storage import vault
 
 
 @pytest.fixture()
@@ -98,7 +98,7 @@ def test_hybrid_search_vector_complement(tmp_vault: Path) -> None:
 
 def test_lesson_backlink(tmp_vault: Path) -> None:
     """双链约定：踩坑本条目带 [[双链]] 回源并落盘。"""
-    from cut_bicuo_zjflow_mcp.modules import lessons
+    from cut_obsidian_mcp.modules import lessons
 
     r = lessons.add("别把 RSI 搞反方向", tags=["qmt"], links=["01-流水账/2026-10-09", "02-踩坑本/其他"])
     assert r["path"].endswith(".md")

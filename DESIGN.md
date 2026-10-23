@@ -1,8 +1,8 @@
-# cut-bicuo-zjflow-mcp 设计文档（V0.3 开发完成）
+# cut-obsidian-mcp 设计文档（V0.3 开发完成）
 
-> 状态：**V0.3 开发完成**（26 工具；GitHub 仓库 `cuohuatang/cut-bicuo-zjflow-mcp`，tag v0.3.0 待推送）
+> 状态：**V0.3 开发完成**（26 工具；GitHub 仓库 `cuohuatang/cut-obsidian-mcp`，tag v0.3.0 待推送）
 > 技术栈：Python 3.10+（`mcp>=2.0`，MCPServer API）
-> 目标仓库：`cuohuatang/cut-bicuo-zjflow-mcp`（GitHub 公开）
+> 目标仓库：`cuohuatang/cut-obsidian-mcp`（GitHub 公开）
 > 许可：MIT
 > V0.2 核心：**静默提炼工作方式/工作流并提示生成 skill**（skillcraft 从历史记录真实提炼步骤、规则、失败处理与来源双链）
 > V0.3 核心：**第二大脑 + GitHub 私有仓库实时同步**（多 Agent 分空间、后台自动消化管线、MOC 导航、Obsidian 开机自动拉取）
@@ -32,7 +32,7 @@
                      │  （全部走 MCP stdio）
                      ▼
           ┌────────────────────────────┐
-          │      cut-bicuo-zjflow-mcp        │  ← 本服务器（MCPServer, mcp>=2.0）
+          │      cut-obsidian-mcp        │  ← 本服务器（MCPServer, mcp>=2.0）
           │  ┌────────┬───────┬──────┐ │
           │  │ memory │ lessons│corr  │ │  ① 自动记忆  ② 踩坑本(errlore式)
           │  │ (agent │ (errlore│ect  │ │  ③ 纠错台账  ④ 自动总结
@@ -43,7 +43,7 @@
           └────────┼──────────┼────────┘
                    ▼          ▼
         ┌────────────────┐   ┌──────────────────┐
-        │ ~/.cut-bicuo-zjflow/ │   │ index.sqlite     │
+        │ ~/.cut-obsidian/ │   │ index.sqlite     │
         │   vault/       │   │ FTS5(BM25) 索引  │
         │  (markdown)    │   │ + TF-IDF 向量    │
         └────────────────┘   └──────────────────┘
@@ -54,13 +54,13 @@
 
 ## 4. 模块来源对照（去重合并结果）
 
-| cut-bicuo-zjflow-mcp 模块 | 功能来源 | 合并方式 |
+| cut-obsidian-mcp 模块 | 功能来源 | 合并方式 |
 |---|---|---|
 | memory 自动记忆 | agentmemory | 会话记录 + 上下文召回（**BM25 + TF-IDF 向量混合**） |
 | summarize 自动总结 | agentmemory `mem::compress` | 会话压缩 + 每周定期整理（**纯规则聚合**，不接外部 LLM） |
 | lessons 踩坑本 | **errlore** | 文件式教训 + 标签 + **按模型信任度** + **Obsidian 双链回源**，开工前自动注入已知错误 |
 | corrections 纠错台账 | **AgentRecall** | 结构化纠正（严重度/证据/生效验证）+ 双链回源，跨会话跨项目 |
-| obsidian 桥梁 | **obsidian-mcp** | 直接文件系统读写 vault（免插件、免 key，`CUT_BICUO_ZJFLOW_VAULT_PATH` 指向） |
+| obsidian 桥梁 | **obsidian-mcp** | 直接文件系统读写 vault（免插件、免 key，`CUT_OBSIDIAN_VAULT_PATH` 指向） |
 
 > 去重说明：errlore 与 AgentRecall 都治「二次犯错」，但分层不同——AgentRecall 管**记录**（每次纠正结构化入库），errlore 管**注入**（开工前把相关教训喂进上下文）。二者互补，合并为「记录 + 注入」一体。
 > 淘汰说明：Mem0-MCP 已归档转云、jacksteamdev/obsidian-mcp-tools 已停更、claude-mem 仅服务 Claude Code —— 均不采用。
@@ -124,7 +124,7 @@
 
 ## 6. 存储格式
 
-### 6.1 目录结构（`CUT_BICUO_ZJFLOW_VAULT_PATH`，默认 `~/.cut-bicuo-zjflow/vault` ★评审决策③：默认该路径且可编辑——环境变量/运行时参数均可覆盖）
+### 6.1 目录结构（`CUT_OBSIDIAN_VAULT_PATH`，默认 `~/.cut-obsidian/vault` ★评审决策③：默认该路径且可编辑——环境变量/运行时参数均可覆盖）
 
 ```
 vault/
@@ -145,7 +145,7 @@ status: active | verified | superseded
 confidence: high | medium | low
 created: 2026-10-09T22:40:00+08:00
 updated: 2026-10-09T22:40:00+08:00
-source: cut-bicuo-zjflow-mcp
+source: cut-obsidian-mcp
 tags: [qmt, rsi]
 links: ["01-流水账/2026-10-09"]  # Obsidian 双链回源
 model: gpt-5            # errlore 式：针对哪个模型的信任度
@@ -166,7 +166,7 @@ evidence: "..."         # AgentRecall 式：证据/触发场景
 
 `links` 参数写入 frontmatter 并在正文末尾渲染为 `- [[...]]` 列表，Obsidian 图谱直接可见；V0.2 的交接文档沿用同一约定（`05-交接/`）。
 
-### 6.4 SQLite 索引（`CUT_BICUO_ZJFLOW_INDEX_PATH`，默认 `~/.cut-bicuo-zjflow/index.sqlite`，可重建）
+### 6.4 SQLite 索引（`CUT_OBSIDIAN_INDEX_PATH`，默认 `~/.cut-obsidian/index.sqlite`，可重建）
 
 ```sql
 CREATE VIRTUAL TABLE IF NOT EXISTS notes USING fts5(
@@ -195,10 +195,10 @@ CREATE VIRTUAL TABLE IF NOT EXISTS notes USING fts5(
 ```json
 {
   "mcpServers": {
-    "cut-bicuo-zjflow": {
+    "cut-obsidian": {
       "command": "uvx",
-      "args": ["cut-bicuo-zjflow-mcp"],
-      "env": { "CUT_BICUO_ZJFLOW_VAULT_PATH": "D:/Obsidian/你的库/vault" }
+      "args": ["cut-obsidian-mcp"],
+      "env": { "CUT_OBSIDIAN_VAULT_PATH": "D:/Obsidian/你的库/vault" }
     }
   }
 }
@@ -206,12 +206,12 @@ CREATE VIRTUAL TABLE IF NOT EXISTS notes USING fts5(
 
 | Agent | 接入位置 |
 |---|---|
-| Claude Code | `.mcp.json`（项目）或 `claude mcp add cut-bicuo-zjflow -- uvx cut-bicuo-zjflow-mcp` |
+| Claude Code | `.mcp.json`（项目）或 `claude mcp add cut-obsidian -- uvx cut-obsidian-mcp` |
 | Cursor | Settings → MCP |
 | OpenClaw / Hermes | 各自 MCP 插件配置 |
 | Codex / Cline / Aider 等 | 任意支持 MCP 的客户端，同一段 JSON |
 
-环境变量（均可编辑）：`CUT_BICUO_ZJFLOW_HOME`（默认 `~/.cut-bicuo-zjflow`）、`CUT_BICUO_ZJFLOW_VAULT_PATH`、`CUT_BICUO_ZJFLOW_INDEX_PATH`。
+环境变量（均可编辑）：`CUT_OBSIDIAN_HOME`（默认 `~/.cut-obsidian`）、`CUT_OBSIDIAN_VAULT_PATH`、`CUT_OBSIDIAN_INDEX_PATH`。
 
 ## 8. 免 key 设计
 
@@ -250,7 +250,7 @@ V0.2 共 **13 项单元测试全过** + 端到端 stdio 冒烟（18 工具注册
 3. ✅ **2026-10-09 推送 GitHub 公开仓库，打 tag v0.1.0**（13 工具）
 4. ✅ V0.2 实现（handoff 六段式交接 + skillcraft 静默提炼工作流，18 工具）→ 13 项测试全过
 5. ✅ **2026-10-09 推送 GitHub 公开仓库，打 tag v0.2.0**（18 工具）
-6. 可选：发布 PyPI（`pip install cut-bicuo-zjflow-mcp` / `uvx cut-bicuo-zjflow-mcp`）
+6. 可选：发布 PyPI（`pip install cut-obsidian-mcp` / `uvx cut-obsidian-mcp`）
 
 ## 12. 实施记录（V0.1 + V0.2）
 
@@ -272,7 +272,7 @@ V0.2 共 **13 项单元测试全过** + 端到端 stdio 冒烟（18 工具注册
 |---|---|---|
 | ① | 向量检索 V0.1 就做 | ✅ hybrid = BM25 + TF-IDF 向量（第 6.5 节） |
 | ② | `cm_summarize` 纯规则聚合 | ✅ 不接外部 LLM（第 5.2 节） |
-| ③ | vault 默认 `~/.cut-bicuo-zjflow/vault` 且可编辑 | ✅ 环境变量/运行时参数可覆盖（第 6.1、7 节） |
+| ③ | vault 默认 `~/.cut-obsidian/vault` 且可编辑 | ✅ 环境变量/运行时参数可覆盖（第 6.1、7 节） |
 | ④ | 交接/踩坑加 Obsidian 双链约定 | ✅ 踩坑/纠错已实现（第 6.3 节）；交接随 V0.2 沿用 |
 
 ## 附录 A：V0.2 增量说明（已发布 v0.2.0）
@@ -284,7 +284,7 @@ V0.2 共 **13 项单元测试全过** + 端到端 stdio 冒烟（18 工具注册
 
 ## 附录 B：V0.3 增量说明（第二大脑 + GitHub 私有仓库实时同步）
 
-- **⑧ GitHub 私有仓库同步（4 工具）**：`cm_github_setup(repo, token, branch)` 把 token 写入本地 0600 `config.json`（也可用环境变量 `CUT_BICUO_ZJFLOW_GITHUB_REPO/TOKEN/BRANCH`）；`cm_github_push` 将 vault 全部增量 commit+push 到私有仓库（`https://x-access-token:<token>@github.com/<repo>.git`，subprocess git，无额外依赖）；`cm_github_pull` 拉取合并；`cm_github_status` 返回本地待推送/远端待拉取计数。**全部 git 输出经脱敏后才返回，token 绝不外泄。**
+- **⑧ GitHub 私有仓库同步（4 工具）**：`cm_github_setup(repo, token, branch)` 把 token 写入本地 0600 `config.json`（也可用环境变量 `CUT_OBSIDIAN_GITHUB_REPO/TOKEN/BRANCH`）；`cm_github_push` 将 vault 全部增量 commit+push 到私有仓库（`https://x-access-token:<token>@github.com/<repo>.git`，subprocess git，无额外依赖）；`cm_github_pull` 拉取合并；`cm_github_status` 返回本地待推送/远端待拉取计数。**全部 git 输出经脱敏后才返回，token 绝不外泄。**
 - **⑨ 第二大脑消化管线（4 工具）**：`cm_brain_process(agent, project, since_days)` 一键消化——收集 01/02/03 目录窗口内未消化素材（按 `agent` 隔离）→ 按共同标签聚类 → 复用 skillcraft 提炼器提取步骤/规则/失败处理 → 生成 `04-经验总结/<date>-<主题>.md` 工作流页（frontmatter 含 `type/category/status/confidence/knowledge_expire_date=+180天/last_updated/source/tags`，正文 `[[相对路径|标题]]` 双链回源）→ 原素材打"已消化"标签并追加双链 → 更新 `06-第二大脑/<agent>/MOC.md` 导航；`cm_brain_finalize(agent, push)` 会话终结一键 = 周总结 + 技能建议 + 消化 + 实时上传；`cm_brain_moc` / `cm_brain_status` 导航与统计。
 - **多 Agent 分空间**：`cm_memory_save / cm_lesson_add / cm_correction_log` 新增可选 `agent`（来源智能体）与 `category`（分类项目）参数，第二大脑按 Agent 隔离、按项目聚合。
 - **闭环（用户本次迭代目标）**：任意 Agent 接入 → 会话中带 `agent/category` 记录 → 会话结束 `cm_brain_finalize` → 自动总结/建议/消化 → 实时 push GitHub 私有仓库 → 本地 Obsidian 装 obsidian-git 插件开机自动 pull → 双链图谱即见。全部本地规则、可审计、token 零外泄。

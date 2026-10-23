@@ -6,13 +6,13 @@ import json
 import os
 from pathlib import Path
 
-APP_DIR = Path(os.environ.get("CUT_BICUO_ZJFLOW_HOME", Path.home() / ".cut-bicuo-zjflow"))
+APP_DIR = Path(os.environ.get("CUT_OBSIDIAN_HOME", Path.home() / ".cut-obsidian"))
 
 # vault：markdown 唯一真相源，Obsidian 可直接打开
-VAULT_PATH = Path(os.environ.get("CUT_BICUO_ZJFLOW_VAULT_PATH", APP_DIR / "vault"))
+VAULT_PATH = Path(os.environ.get("CUT_OBSIDIAN_VAULT_PATH", APP_DIR / "vault"))
 
 # 检索索引（SQLite FTS5，可重建）
-INDEX_PATH = Path(os.environ.get("CUT_BICUO_ZJFLOW_INDEX_PATH", APP_DIR / "index.sqlite"))
+INDEX_PATH = Path(os.environ.get("CUT_OBSIDIAN_INDEX_PATH", APP_DIR / "index.sqlite"))
 
 # vault 子目录（固定命名，Obsidian 友好）
 VAULT_DIRS = {
@@ -25,10 +25,10 @@ VAULT_DIRS = {
 }
 
 # ---------- V0.3：GitHub 私有仓库同步（第二大脑云端镜像） ----------
-# 也可通过 cm_github_setup 写入 ~/.cut-bicuo-zjflow/config.json（0600，token 只存本地）
-GITHUB_REPO = os.environ.get("CUT_BICUO_ZJFLOW_GITHUB_REPO", "")  # 如 cuohuatang/cut-bicuo-brain
-GITHUB_BRANCH = os.environ.get("CUT_BICUO_ZJFLOW_GITHUB_BRANCH", "main")
-_GITHUB_TOKEN_ENV = os.environ.get("CUT_BICUO_ZJFLOW_GITHUB_TOKEN", "")
+# 也可通过 cm_github_setup 写入 ~/.cut-obsidian/config.json（0600，token 只存本地）
+GITHUB_REPO = os.environ.get("CUT_OBSIDIAN_GITHUB_REPO", "")  # 如 cuohuatang/cut-obsidian-brain
+GITHUB_BRANCH = os.environ.get("CUT_OBSIDIAN_GITHUB_BRANCH", "main")
+_GITHUB_TOKEN_ENV = os.environ.get("CUT_OBSIDIAN_GITHUB_TOKEN", "")
 
 CONFIG_FILE = APP_DIR / "config.json"
 

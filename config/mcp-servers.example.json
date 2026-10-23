@@ -1,11 +1,11 @@
 {
   "mcpServers": {
-    "cut-bicuo-zjflow": {
+    "cut-obsidian": {
       "command": "uvx",
-      "args": ["cut-bicuo-zjflow-mcp"],
+      "args": ["cut-obsidian-mcp"],
       "env": {
-        "CUT_BICUO_ZJFLOW_VAULT_PATH": "D:/Obsidian/你的库/vault",
-        "CUT_BICUO_ZJFLOW_INDEX_PATH": "D:/Obsidian/你的库/index.sqlite"
+        "CUT_OBSIDIAN_VAULT_PATH": "D:/Obsidian/你的库/vault",
+        "CUT_OBSIDIAN_INDEX_PATH": "D:/Obsidian/你的库/index.sqlite"
       }
     }
   }

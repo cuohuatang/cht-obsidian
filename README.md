@@ -1,16 +1,16 @@
-# cut-bicuo-zjflow-mcp
+# cut-obsidian-mcp
 
 一体化 **第二大脑** MCP 服务器：**自动记忆 + 自动总结 + 踩坑本(errlore式) + 纠错台账(AgentRecall式) + Obsidian 嫁接(obsidian-mcp式) + 会话交接(session-handoff式) + 技能沉淀(session-to-skill式) + GitHub 私有仓库实时同步**。
 免费、免 API key、纯本地，一套工具接入所有支持 MCP 的 Agent（Claude Code / Cursor / Codex / OpenCode / Gemini CLI / 豆包工作台等）。
 
-> 当前状态：**V0.3 已开发完成**（26 工具，GitHub 仓库 `cuohuatang/cut-bicuo-zjflow-mcp`，tag v0.3.0）。
+> 当前状态：**V0.3 已开发完成**（26 工具，GitHub 仓库 `cuohuatang/cut-obsidian-mcp`，tag v0.3.0）。
 > V0.3 核心 = **第二大脑 + 云端镜像**：智能体工作时后台自动消化其各分类项目 → 提炼/总结/萃取成工作流 → 打标签 → 双链 → 实时上传 GitHub 私有仓库 → 本地 Obsidian 开机经 obsidian-git 自动拉取。完整设计见 [DESIGN.md](DESIGN.md)，版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 快速开始
 
 ```bash
 pip install -e ".[dev]"
-cut-bicuo-zjflow-mcp        # 以 MCP 服务器运行（stdio）
+cut-obsidian-mcp        # 以 MCP 服务器运行（stdio）
 python -m pytest -q         # 跑测试（22 项全过）
 ```
 
@@ -19,22 +19,22 @@ python -m pytest -q         # 跑测试（22 项全过）
 ```json
 {
   "mcpServers": {
-    "cut-bicuo-zjflow": {
+    "cut-obsidian": {
       "command": "uvx",
-      "args": ["cut-bicuo-zjflow-mcp"],
+      "args": ["cut-obsidian-mcp"],
       "env": {
-        "CUT_BICUO_ZJFLOW_VAULT_PATH": "D:/Obsidian/你的库/vault",
-        "CUT_BICUO_ZJFLOW_GITHUB_REPO": "你的账号/cut-bicuo-brain",
-        "CUT_BICUO_ZJFLOW_GITHUB_TOKEN": "你的私有仓库 token"
+        "CUT_OBSIDIAN_VAULT_PATH": "D:/Obsidian/你的库/vault",
+        "CUT_OBSIDIAN_GITHUB_REPO": "你的账号/cut-obsidian-brain",
+        "CUT_OBSIDIAN_GITHUB_TOKEN": "你的私有仓库 token"
       }
     }
   }
 }
 ```
 
-Claude Code：`claude mcp add cut-bicuo-zjflow -- uvx cut-bicuo-zjflow-mcp`，或写入 `.mcp.json`。
+Claude Code：`claude mcp add cut-obsidian -- uvx cut-obsidian-mcp`，或写入 `.mcp.json`。
 
-环境变量均可编辑：`CUT_BICUO_ZJFLOW_HOME`、`CUT_BICUO_ZJFLOW_VAULT_PATH`、`CUT_BICUO_ZJFLOW_INDEX_PATH`、`CUT_BICUO_ZJFLOW_GITHUB_REPO/TOKEN/BRANCH`。token 也可经 `cm_github_setup` 写入本地 0600 文件，不强制放环境变量。
+环境变量均可编辑：`CUT_OBSIDIAN_HOME`、`CUT_OBSIDIAN_VAULT_PATH`、`CUT_OBSIDIAN_INDEX_PATH`、`CUT_OBSIDIAN_GITHUB_REPO/TOKEN/BRANCH`。token 也可经 `cm_github_setup` 写入本地 0600 文件，不强制放环境变量。
 
 ## 工具一览（26 个）
 
@@ -84,14 +84,14 @@ Claude Code：`claude mcp add cut-bicuo-zjflow -- uvx cut-bicuo-zjflow-mcp`，�
 ## 数据（Obsidian 唯一真相源）
 
 ```
-~/.cut-bicuo-zjflow/vault/           ← markdown 真相源（Obsidian 直接打开）
+~/.cut-obsidian/vault/           ← markdown 真相源（Obsidian 直接打开）
 ├── 01-流水账/          ← 记忆（按 agent/category 打标）
 ├── 02-踩坑本/          ← 踩坑本（errlore 式，含 [[双链]] 回源）
 ├── 03-纠错台账/        ← 纠错台账（AgentRecall 式，含 [[双链]] 回源）
 ├── 04-经验总结/        ← 工作流主题页（消化管线自动生成）
 ├── 05-交接/            ← 六段式会话交接
 └── 06-第二大脑/<agent>/MOC.md   ← MOC 导航（V0.3 自动聚合）
-~/.cut-bicuo-zjflow/index.sqlite   ← 检索索引（FTS5 + 向量缓存，可重建）
+~/.cut-obsidian/index.sqlite   ← 检索索引（FTS5 + 向量缓存，可重建）
 ```
 
 双链约定：`cm_lesson_add(..., links=["01-流水账/2026-10-09"])`、`cm_correction_log(..., links=[...])` → 写入 frontmatter 并在正文渲染 `[[...]]`；消化管线自动给工作流页生成 `[[相对路径|标题]]` 双链，Obsidian 图谱互通。

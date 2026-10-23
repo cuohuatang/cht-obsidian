@@ -1,4 +1,4 @@
-"""cut-bicuo-zjflow-mcp 服务器入口：MCPServer 注册全部 26 个 cm_ 工具（V0.3）。
+"""cut-obsidian-mcp 服务器入口：MCPServer 注册全部 26 个 cm_ 工具（V0.3）。
 
 V0.3 = 第二大脑：多 Agent 分空间 + 后台自动消化管线（提炼→工作流→标签→双链→MOC）
 + GitHub 私有仓库实时同步（Obsidian 开机经 obsidian-git 自动拉取）。
@@ -14,7 +14,7 @@ from . import __version__
 from .modules import brain, corrections, github_sync, handoff, lessons, memory, obsidian, skillcraft, summarize
 
 mcp = MCPServer(
-    name="cut-bicuo-zjflow-mcp",
+    name="cut-obsidian-mcp",
     instructions=(
         "一体化第二大脑：自动记忆、自动总结、踩坑本(errlore式)、纠错台账(AgentRecall式)、"
         "Obsidian 嫁接、会话交接(session-handoff式)、技能沉淀(session-to-skill式)、"

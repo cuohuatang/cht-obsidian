@@ -48,8 +48,8 @@ def _ensure_repo() -> dict[str, Any]:
     if not _vault_git_dir().exists():
         _run(["git", "init"], cwd=config.VAULT_PATH)
     # 兜底身份（用户可自行覆盖）
-    _run(["git", "config", "user.name", "cut-bicuo-zjflow-bot"], cwd=config.VAULT_PATH, check=False)
-    _run(["git", "config", "user.email", "bot@cut-bicuo-zjflow.local"], cwd=config.VAULT_PATH, check=False)
+    _run(["git", "config", "user.name", "cut-obsidian-bot"], cwd=config.VAULT_PATH, check=False)
+    _run(["git", "config", "user.email", "bot@cut-obsidian.local"], cwd=config.VAULT_PATH, check=False)
     return {"vault_path": str(config.VAULT_PATH)}
 
 
@@ -104,7 +104,7 @@ def push(message: str = "") -> dict[str, Any]:
     if not out.strip():
         return {"pushed": False, "message": "无待提交变更", "changed_files": 0}
     changed = len([l for l in out.splitlines() if l.strip()])
-    msg = (message or "cut-bicuo-zjflow 第二大脑实时同步").strip()
+    msg = (message or "cut-obsidian 第二大脑实时同步").strip()
     _run(["git", "add", "-A"], cwd=config.VAULT_PATH, cred=cred)
     _run(["git", "commit", "-m", msg], cwd=config.VAULT_PATH, cred=cred, check=False)
     branch = cred.get("branch", "main")

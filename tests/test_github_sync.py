@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from cut_bicuo_zjflow_mcp import config
-from cut_bicuo_zjflow_mcp.modules import github_sync
-from cut_bicuo_zjflow_mcp.storage import vault
+from cut_obsidian_mcp import config
+from cut_obsidian_mcp.modules import github_sync
+from cut_obsidian_mcp.storage import vault
 
 FAKE_TOKEN = "ghp_TEST_TOKEN_123456"
 
