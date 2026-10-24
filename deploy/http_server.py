@@ -323,6 +323,7 @@ def _build_app(transport: str, path: str):
             "branch": cfg.get("branch", "main"),
             "configured": bool(cfg.get("repo")),
             "oauth": True,
+            "oauth_ready": bool(OAUTH_CID and OAUTH_SEC),
             "ephemeral": True,
             "idle_wipe_min": IDLE_WIPE // 60,
         })
@@ -373,6 +374,123 @@ def _build_app(transport: str, path: str):
             d = _gh2.push()
         return _JSON({"ok": True, **d})
 
+    async def _app_import(request):
+        """入库：把外部采集内容（Agent 配置/微信记录/纯文本）拆成笔记存入并立即推送。"""
+        login = _read_cookie(request)
+        if not login:
+            return _JSON({"error": "未登录"}, status_code=401)
+        _last_seen[login] = _time.time()
+        body = _json.loads(await request.body() or b"{}")
+        source = body.get("source", "text")
+        raw = (body.get("text") or body.get("content") or "").strip()
+        if not raw:
+            return _JSON({"error": "内容为空"}, status_code=400)
+
+        notes: list[dict] = []  # {title, content, tags}
+
+        def _walk_strings(obj, depth: int = 0):
+            if depth > 8:
+                return
+            if isinstance(obj, str):
+                s = obj.strip()
+                if len(s) >= 8:
+                    notes.append({"title": s[:40], "content": s, "tags": ["入库", "agent"]})
+            elif isinstance(obj, dict):
+                for k, v in obj.items():
+                    if isinstance(v, str) and len(v.strip()) >= 8 and k.lower() in ("content", "memory", "note", "text", "summary", "description", "message"):
+                        notes.append({"title": k + "：" + v.strip()[:30], "content": v.strip(), "tags": ["入库", "agent"]})
+                    else:
+                        _walk_strings(v, depth + 1)
+            elif isinstance(obj, list):
+                for it in obj:
+                    _walk_strings(it, depth + 1)
+
+        if source == "agent":
+            try:
+                _walk_strings(_json.loads(raw))
+            except Exception:  # noqa: BLE001 —— 非 JSON 就整段当一条
+                notes = [{"title": raw[:40], "content": raw, "tags": ["入库", "agent"]}]
+            if not notes:  # JSON 里没有可用文本
+                notes = [{"title": raw[:40], "content": raw, "tags": ["入库", "agent"]}]
+        elif source == "wechat":
+            import re as _re2
+            # 按日期行/空行切分聊天记录
+            chunks = _re2.split(r"\n\s*\n|(?=\d{4}[-/年]\d{1,2}[-/月]\d{1,2})", raw)
+            for c in chunks:
+                c = c.strip()
+                if len(c) >= 10:
+                    notes.append({"title": c[:40].replace("\n", " "), "content": c, "tags": ["入库", "微信"]})
+            if not notes:
+                notes = [{"title": raw[:40], "content": raw, "tags": ["入库", "微信"]}]
+        else:
+            notes = [{"title": raw[:40], "content": raw, "tags": ["入库", "手动"]}]
+
+        notes = notes[:50]  # 单次上限，防止误贴超大文件
+        cfg = _load_user_cfg(login)
+        if not cfg.get("repo"):
+            return _JSON({"error": "请先在「出库」页绑定 GitHub 仓库，入库内容才能推送"}, status_code=400)
+        from cut_obsidian_mcp.modules import memory as _memory
+        from cut_obsidian_mcp.modules import github_sync as _gh2
+        saved = 0
+        with _UserCtx(login):
+            for n in notes:
+                try:
+                    _memory.save(n["content"], title=n["title"], tags=n["tags"], agent="import")
+                    saved += 1
+                except Exception:  # noqa: BLE001
+                    continue
+            pushed = _gh2.push(message=f"import {source} by {login}")
+        return _JSON({"ok": True, "saved": saved, "imported": saved, "total": len(notes), "pushed": pushed})
+
+    async def _app_key(request):
+        """出库·高级：保存用户自定义推送凭证（Token 或 SSH 私钥，0600 保密）。
+
+        与 GitHub 登录授权二选一：授权覆盖不了的仓库（组织仓库/漏勾选）才需要手动放钥匙。
+        整体替换语义：每次保存都会清掉旧凭证，避免两把钥匙打架。
+        """
+        login = _read_cookie(request)
+        if not login:
+            return _JSON({"error": "未登录"}, status_code=401)
+        _last_seen[login] = _time.time()
+        body = _json.loads(await request.body() or b"{}")
+        tok = (body.get("token") or "").strip()
+        key = (body.get("ssh_key") or "").strip()
+        if not tok and not key:
+            return _JSON({"error": "Token 和 SSH 私钥至少填一个"}, status_code=400)
+
+        cfg = _load_user_cfg(login)
+        # 清掉旧凭证（整体替换）
+        old_key = cfg.pop("ssh_key", None)
+        if old_key:
+            try:
+                _Path(old_key).unlink()
+            except OSError:
+                pass
+        cfg.pop("token", None)
+
+        if tok:
+            if not (tok.startswith("gh") and len(tok) >= 20):
+                return _JSON({"error": "Token 格式不像 GitHub 钥匙（应以 gh 开头、长度至少 20 位，注意别把口令或密码粘进来）"}, status_code=400)
+            cfg["token"] = tok
+            cfg["auth_mode"] = "token"
+        if key:
+            if "PRIVATE KEY" not in key:
+                return _JSON({"error": "这不像一份 SSH 私钥（应包含 -----BEGIN … PRIVATE KEY----- 行）"}, status_code=400)
+            kdir = _user_dir(login) / ".ssh"
+            kdir.mkdir(parents=True, exist_ok=True)
+            kf = kdir / "id_ed25519"
+            kf.write_text(key.rstrip("\n") + "\n", encoding="utf-8")
+            try:
+                kf.chmod(0o600)
+                kdir.chmod(0o700)
+            except OSError:
+                pass
+            cfg["ssh_key"] = str(kf)
+            cfg["auth_mode"] = "ssh"
+
+        _save_user_cfg(login, cfg)
+        return _JSON({"ok": True, "mode": "Token" if tok else "SSH 私钥", "auth_mode": cfg["auth_mode"]})
+
     # ── 管理总览（管理员口令） ──
     async def _admin_page(request):
         return FileResponse(_Path(__file__).parent / "admin.html", media_type="text/html")
@@ -408,6 +526,8 @@ def _build_app(transport: str, path: str):
         Route("/api/app/bind", _app_bind, methods=["POST"]),
         Route("/api/app/save", _app_save, methods=["POST"]),
         Route("/api/app/push", _app_push, methods=["POST"]),
+        Route("/api/app/import", _app_import, methods=["POST"]),
+        Route("/api/app/key", _app_key, methods=["POST"]),
         Route("/admin", _admin_page, methods=["GET"]),
         Route("/api/admin/users", _admin_users, methods=["GET"]),
     ]

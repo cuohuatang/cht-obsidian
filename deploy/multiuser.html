@@ -5,28 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>cht-obsidian · 我的第二大脑</title>
 <style>
-  :root { --bg:#0f172a; --card:#1e293b; --line:#334155; --fg:#e2e8f0; --dim:#94a3b8; --ok:#4ade80; --err:#f87171; --acc:#38bdf8; }
+  :root { --bg:#0f172a; --card:#1e293b; --line:#334155; --fg:#e2e8f0; --dim:#94a3b8; --ok:#4ade80; --err:#f87171; --acc:#38bdf8; --in:#a78bfa; --out:#34d399; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--fg); font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; padding:24px 16px; }
-  .wrap { max-width:680px; margin:0 auto; }
+  .wrap { max-width:760px; margin:0 auto; }
   h1 { font-size:22px; margin-bottom:4px; } .sub { color:var(--dim); font-size:13px; margin-bottom:20px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
   .card h2 { font-size:15px; margin-bottom:12px; color:var(--acc); }
   .hint { font-size:12px; color:var(--dim); margin-bottom:6px; line-height:1.7; }
-  .hint a { color:var(--acc); }
-  input,textarea { width:100%; background:#0b1120; border:1px solid var(--line); border-radius:8px; color:var(--fg); padding:10px 12px; font-size:14px; font-family:inherit; }
-  input:focus,textarea:focus { outline:none; border-color:var(--acc); }
-  textarea { min-height:110px; resize:vertical; }
+  .hint a, .hint code { color:var(--acc); }
+  .hint code { background:#0b1120; padding:1px 6px; border-radius:4px; }
+  input,textarea,select { width:100%; background:#0b1120; border:1px solid var(--line); border-radius:8px; color:var(--fg); padding:10px 12px; font-size:14px; font-family:inherit; }
+  input:focus,textarea:focus,select:focus { outline:none; border-color:var(--acc); }
+  textarea { min-height:110px; resize:vertical; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; }
   button { background:var(--acc); color:#04121f; border:none; border-radius:8px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; margin-top:14px; }
   button.ghost { background:transparent; color:var(--acc); border:1px solid var(--acc); }
   button.gh { background:#24292e; color:#fff; display:flex; align-items:center; gap:10px; justify-content:center; width:100%; font-size:15px; }
   button.gh:hover { background:#32383f; }
-  .btns { display:flex; gap:10px; flex-wrap:wrap; }
+  .btns { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
   .msg { margin-top:12px; padding:10px 12px; border-radius:8px; font-size:13px; line-height:1.6; display:none; white-space:pre-wrap; word-break:break-all; }
   .msg.ok{background:#052e16; color:var(--ok); display:block;} .msg.err{background:#3f1414; color:var(--err); display:block;} .msg.info{background:#0c2436; color:var(--acc); display:block;}
   .me { display:flex; align-items:center; gap:12px; }
   .avatar { width:44px; height:44px; border-radius:50%; border:2px solid var(--acc); }
   .pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:12px; background:#0c2436; color:var(--acc); margin-left:8px; }
+  /* ===== 入库/出库 双卡片 ===== */
+  .hub { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:640px){ .hub { grid-template-columns:1fr; } }
+  .hub-card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px 22px; cursor:pointer; text-align:center; transition:transform .15s, border-color .15s; }
+  .hub-card:hover { transform:translateY(-3px); }
+  .hub-card.in:hover { border-color:var(--in); } .hub-card.out:hover { border-color:var(--out); }
+  .hub-icon { font-size:44px; margin-bottom:10px; }
+  .hub-title { font-size:18px; font-weight:700; margin-bottom:8px; }
+  .hub-card.in .hub-title { color:var(--in); } .hub-card.out .hub-title { color:var(--out); }
+  .hub-desc { font-size:12px; color:var(--dim); line-height:1.8; }
+  .view { display:none; } .view.on { display:block; }
+  .back { background:none; border:none; color:var(--dim); font-size:13px; cursor:pointer; padding:0; margin-bottom:14px; }
+  .back:hover { color:var(--acc); }
+  /* 来源 Tab */
+  .tabs { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .tab { flex:1; min-width:100px; padding:10px 8px; border-radius:10px; border:1px solid var(--line); background:#0b1120; color:var(--dim); font-size:13px; cursor:pointer; text-align:center; }
+  .tab.on { border-color:var(--in); color:var(--in); background:#1a1030; font-weight:600; }
+  .src { display:none; } .src.on { display:block; }
+  .kv { font-size:13px; line-height:2; }
+  .kv b { color:var(--fg); } .kv span { color:var(--dim); }
+  details { margin-top:10px; border:1px dashed var(--line); border-radius:8px; padding:10px 12px; }
+  details summary { cursor:pointer; font-size:13px; color:var(--acc); }
+  .field { margin-bottom:12px; }
+  .field label { display:block; font-size:12px; color:var(--dim); margin-bottom:5px; }
 </style>
 </head>
 <body>
@@ -42,48 +67,129 @@
       <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       使用 GitHub 登录
     </button>
+    <div class="msg info" id="oauthGuide" style="display:none"></div>
     <div class="msg" id="loginMsg"></div>
   </div>
 
   <!-- 已登录：控制台 -->
   <div id="main" style="display:none">
+
+    <!-- 账号条 -->
     <div class="card">
-      <h2>👤 我的账号</h2>
       <div class="me">
         <img class="avatar" id="avatar" src="" alt="">
-        <div>
+        <div style="flex:1">
           <b id="loginName" style="font-size:16px"></b><span class="pill" id="repoPill">未绑定仓库</span>
           <div class="hint" style="margin-top:4px" id="privHint"></div>
         </div>
-      </div>
-      <div class="btns">
-        <button class="ghost" onclick="logout()">登出（并清除服务器上的临时数据）</button>
+        <button class="ghost" style="margin-top:0" onclick="logout()">登出<br><span style="font-size:11px;font-weight:400">（清除服务器临时数据）</span></button>
       </div>
     </div>
 
-    <div class="card">
-      <h2>📦 绑定我的 GitHub 仓库</h2>
-      <div class="hint">填 <code>用户名/仓库名</code>（例如 <code>zhangsan/my-brain</code>）。仓库需已存在；不存在？<a href="https://github.com/new" target="_blank">点此创建</a>（建议 Private）。<b>推送凭证来自你的 GitHub 登录授权，无需另填 Token。</b></div>
-      <input id="repo" placeholder="zhangsan/my-brain">
-      <input id="branch" value="main" placeholder="分支（默认 main）" style="margin-top:8px">
-      <button onclick="bind()">保存绑定</button>
-      <div class="msg" id="bindMsg"></div>
+    <!-- ===== 主页：入库 / 出库 双卡片 ===== -->
+    <div id="hub" class="hub">
+      <div class="hub-card in" onclick="showView('in')">
+        <div class="hub-icon">📥</div>
+        <div class="hub-title">入库 · 采集</div>
+        <div class="hub-desc">把内容存进你的第二大脑<br>✍️ 手动记录 · 🤖 从 Agent 采集 · 💬 从微信采集</div>
+      </div>
+      <div class="hub-card out" onclick="showView('out')">
+        <div class="hub-icon">📤</div>
+        <div class="hub-title">出库 · 仓库配置</div>
+        <div class="hub-desc">配置推送到哪里去<br>📦 GitHub 仓库 · 🔑 钥匙管理 · ⬆️ 立即推送</div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>✍️ 存一条笔记（即存即推）</h2>
-      <div class="hint">保存后立即推送到你绑定的 GitHub 仓库；服务器本地仅临时保留，会话结束或闲置超时后自动清除。</div>
-      <input id="title" placeholder="标题（可选）" style="margin-bottom:8px">
-      <textarea id="content" placeholder="要记住的内容…"></textarea>
-      <input id="tags" placeholder="标签，逗号分隔（可选）" style="margin-top:8px">
-      <button onclick="save()">💾 保存并推送</button>
-      <div class="msg" id="saveMsg"></div>
+    <!-- ===== 入库视图 ===== -->
+    <div id="view-in" class="view">
+      <button class="back" onclick="showHub()">← 返回主页</button>
+      <div class="card">
+        <h2>📥 入库 · 从哪儿采集？</h2>
+        <div class="tabs">
+          <div class="tab on" id="tab-text" onclick="pickSrc('text')">✍️ 手动记录</div>
+          <div class="tab" id="tab-agent" onclick="pickSrc('agent')">🤖 从 Agent 采集</div>
+          <div class="tab" id="tab-wechat" onclick="pickSrc('wechat')">💬 从微信采集</div>
+        </div>
+
+        <!-- 来源一：手动记录 -->
+        <div class="src on" id="src-text">
+          <div class="hint">保存后立即推送到你绑定的 GitHub 仓库；服务器本地仅临时保留，会话结束或闲置超时后自动清除。</div>
+          <div class="field"><input id="title" placeholder="标题（可选）"></div>
+          <textarea id="content" placeholder="要记住的内容…" style="font-family:inherit;font-size:14px"></textarea>
+          <div class="field" style="margin-top:12px"><input id="tags" placeholder="标签，逗号分隔（可选）"></div>
+          <button onclick="save()">💾 保存并推送</button>
+          <div class="msg" id="saveMsg"></div>
+        </div>
+
+        <!-- 来源二：从 Agent 采集 -->
+        <div class="src" id="src-agent">
+          <div class="hint">把 Agent（MCP 客户端 / 其他 AI 工具）的配置或记录粘贴到下面，系统会自动提取其中的文本内容，逐条入库。支持 JSON 配置、纯文本记录、或混合粘贴。</div>
+          <textarea id="agentText" placeholder='示例（MCP 配置）：
+{
+  "mcpServers": {
+    "cht-obsidian": {
+      "url": "http://154.12.41.33:8899/sse",
+      "note": "用户的第二大脑：自动纠错、经验沉淀、语义聚类"
+    }
+  }
+}
+
+或直接粘贴 Agent 输出的一段对话/笔记…'></textarea>
+          <button onclick="doImport('agent')">🤖 提取并入库</button>
+          <div class="msg" id="agentMsg"></div>
+        </div>
+
+        <!-- 来源三：从微信采集 -->
+        <div class="src" id="src-wechat">
+          <div class="hint">粘贴微信聊天记录（群聊/单聊均可），系统会按空行或日期自动切分成多条，逐条入库。超出 50 条的部分将被忽略。</div>
+          <textarea id="wechatText" placeholder="张三 2024-01-15 10:30:00
+今天的经验：部署时先看日志再动手
+
+李四 2024-01-15 10:32:11
++1，另外镜像源要用国内加速"></textarea>
+          <button onclick="doImport('wechat')">💬 提取并入库</button>
+          <div class="msg" id="wechatMsg"></div>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>🔄 手动推送</h2>
-      <button onclick="push()">⬆️ 立即推送全部到我的仓库</button>
-      <div class="msg" id="pushMsg"></div>
+    <!-- ===== 出库视图 ===== -->
+    <div id="view-out" class="view">
+      <button class="back" onclick="showHub()">← 返回主页</button>
+      <div class="card">
+        <h2>📦 绑定我的 GitHub 仓库</h2>
+        <div class="hint">填 <code>用户名/仓库名</code>（例如 <code>zhangsan/my-brain</code>）。仓库需已存在；不存在？<a href="https://github.com/new" target="_blank">点此创建</a>（建议 Private）。<b>推送凭证默认来自你的 GitHub 登录授权，无需另填钥匙。</b></div>
+        <div class="field" style="margin-top:12px"><input id="repo" placeholder="zhangsan/my-brain"></div>
+        <div class="field"><input id="branch" value="main" placeholder="分支（默认 main）"></div>
+        <button onclick="bind()">保存绑定</button>
+        <div class="msg" id="bindMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>⬆️ 立即推送</h2>
+        <div class="hint">手动触发一次全量推送，把服务器上你所有的临时笔记同步到 GitHub 仓库。</div>
+        <button onclick="push()">⬆️ 立即推送全部到我的仓库</button>
+        <div class="msg" id="pushMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>🔑 高级：自定义推送钥匙</h2>
+        <div class="hint">一般不用填——用 GitHub 登录授权最省事。只有当你的仓库<b>不在本次授权范围</b>（例如推送到组织仓库、或授权时没勾选），才需要在这里单独放一把钥匙。</div>
+        <details>
+          <summary>展开：填写 Token 或 SSH 私钥（可选）</summary>
+          <div class="field" style="margin-top:12px">
+            <label>方式一：GitHub Personal Access Token（classic）</label>
+            <input id="ghToken" type="password" placeholder="ghp_… 或 github_pat_…">
+            <div class="hint" style="margin-top:5px">申请：<a href="https://github.com/settings/tokens/new?scopes=repo&description=cht-obsidian" target="_blank">github.com/settings/tokens/new</a> → 勾选 <code>repo</code> 权限 → Generate → 复制粘贴到此处</div>
+          </div>
+          <div class="field">
+            <label>方式二：SSH 私钥（部署公钥到仓库 Deploy keys）</label>
+            <textarea id="sshKey" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;…&#10;-----END OPENSSH PRIVATE KEY-----" style="min-height:80px"></textarea>
+          </div>
+          <button class="ghost" onclick="saveKey()">保存钥匙</button>
+          <div class="msg" id="keyMsg"></div>
+        </details>
+      </div>
     </div>
   </div>
 </div>
@@ -92,11 +198,43 @@
 const $ = id => document.getElementById(id);
 function showMsg(id, ok, text){ const el=$(id); el.className='msg '+(ok?'ok':'err'); el.textContent=text; }
 
+/* ---------- 视图切换 ---------- */
+function showHub(){
+  $('hub').style.display='grid';
+  $('view-in').classList.remove('on');
+  $('view-out').classList.remove('on');
+}
+function showView(v){
+  $('hub').style.display='none';
+  $('view-in').classList.toggle('on', v==='in');
+  $('view-out').classList.toggle('on', v==='out');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function pickSrc(src){
+  ['text','agent','wechat'].forEach(s=>{
+    $('tab-'+s).classList.toggle('on', s===src);
+    $('src-'+s).classList.toggle('on', s===src);
+  });
+}
+
+/* ---------- 账号 ---------- */
 async function me(){
   let d;
   try { d = await (await fetch('/api/app/me')).json(); }
   catch(e){ showMsg('loginMsg',false,'服务器未启动或网络错误：'+e.message); return; }
   if(d.error){ $('login').style.display='block'; return; }
+  if(!d.oauth_ready){
+    // 服务端还没配 OAuth：显示管理员开启指南
+    const g = $('oauthGuide');
+    g.style.display = 'block';
+    g.innerHTML = '⚙️ <b>登录功能尚未开启（需要管理员一次性配置，约 5 分钟）：</b><br>' +
+      '① 用管理员 GitHub 账号打开 <a href="https://github.com/settings/developers" target="_blank">github.com/settings/developers</a> → <b>New OAuth App</b><br>' +
+      '② <b>Application name</b> 填 cht-obsidian；<b>Homepage URL</b> 填 <code>http://' + location.host + '</code><br>' +
+      '③ <b>Authorization callback URL</b> 填 <code>http://' + location.host + '/auth/callback</code>（必须一字不差）→ Register application<br>' +
+      '④ 复制 <b>Client ID</b>，再点 <b>Generate a new client secret</b> 复制 Secret（只显示一次）<br>' +
+      '⑤ 把这两个值填到服务器 /opt/cht-obsidian/.env 的 GITHUB_OAUTH_CLIENT_ID 和 GITHUB_OAUTH_CLIENT_SECRET，然后 <code>cd /opt/cht-obsidian && docker compose up -d --force-recreate</code> 重启即生效';
+    return;
+  }
   $('login').style.display='none'; $('main').style.display='block';
   $('loginName').textContent = d.login;
   $('avatar').src = `https://github.com/${d.login}.png?size=88`;
@@ -104,6 +242,8 @@ async function me(){
   $('privHint').textContent = `隐私模式：服务器临时存放，闲置 ${d.idle_wipe_min} 分钟自动清除`;
   if(d.configured){ $('repo').value = d.repo; $('branch').value = d.branch || 'main'; }
 }
+
+/* ---------- 出库：绑定 / 推送 / 钥匙 ---------- */
 async function bind(){
   showMsg('bindMsg',true,'保存中…');
   const r = await fetch('/api/app/bind',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -111,6 +251,25 @@ async function bind(){
   const d = await r.json();
   d.ok ? (showMsg('bindMsg',true,'✅ 已绑定 '+d.repo+'（分支 '+d.branch+'）'), me()) : showMsg('bindMsg',false,'❌ '+(d.error||'失败'));
 }
+async function push(){
+  showMsg('pushMsg',true,'推送中…');
+  const r = await fetch('/api/app/push',{method:'POST'});
+  const d = await r.json();
+  d.ok ? showMsg('pushMsg',true, d.pushed ? ('✅ 已推送 '+d.changed_files+' 个文件') : '✅ 无待推送变更') : showMsg('pushMsg',false,'❌ '+(d.error||'失败'));
+}
+async function saveKey(){
+  showMsg('keyMsg',true,'保存中…');
+  const body = {};
+  if($('ghToken').value.trim()) body.token = $('ghToken').value.trim();
+  if($('sshKey').value.trim()) body.ssh_key = $('sshKey').value.trim();
+  if(!body.token && !body.ssh_key){ showMsg('keyMsg',false,'❌ Token 和 SSH 私钥至少填一个'); return; }
+  const r = await fetch('/api/app/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json();
+  if(d.ok){ showMsg('keyMsg',true,'✅ 钥匙已保存（0600 权限，仅你自己可用）'); $('ghToken').value=''; $('sshKey').value=''; }
+  else showMsg('keyMsg',false,'❌ '+(d.error||'失败'));
+}
+
+/* ---------- 入库：手动保存 ---------- */
 async function save(){
   showMsg('saveMsg',true,'保存并推送中…');
   const r = await fetch('/api/app/save',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -123,12 +282,23 @@ async function save(){
     $('content').value=''; $('title').value=''; $('tags').value='';
   } else showMsg('saveMsg',false,'❌ '+(d.error||'失败'));
 }
-async function push(){
-  showMsg('pushMsg',true,'推送中…');
-  const r = await fetch('/api/app/push',{method:'POST'});
+
+/* ---------- 入库：Agent / 微信 采集 ---------- */
+async function doImport(source){
+  const msgId = source==='agent' ? 'agentMsg' : 'wechatMsg';
+  const text = $(source==='agent' ? 'agentText' : 'wechatText').value.trim();
+  if(!text){ showMsg(msgId,false,'❌ 请先粘贴内容'); return; }
+  showMsg(msgId,true,'解析并入库中…');
+  const r = await fetch('/api/app/import',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({source, text})});
   const d = await r.json();
-  d.ok ? showMsg('pushMsg',true, d.pushed ? ('✅ 已推送 '+d.changed_files+' 个文件') : '✅ 无待推送变更') : showMsg('pushMsg',false,'❌ '+(d.error||'失败'));
+  if(d.ok){
+    const p = d.pushed || {};
+    showMsg(msgId,true,`✅ 共提取 ${d.imported} 条入库`+(p.pushed?`，已推送到 GitHub（${p.changed_files||d.imported} 个文件）`:'（无新变更，未推送）'));
+    $(source==='agent' ? 'agentText' : 'wechatText').value='';
+  } else showMsg(msgId,false,'❌ '+(d.error||'失败'));
 }
+
 async function logout(){ await fetch('/auth/logout'); location.href='/'; }
 me();
 </script>

@@ -12,6 +12,7 @@ GitHub 私有仓库；本地 Obsidian 开机后经 obsidian-git 插件自动 pul
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -54,10 +55,27 @@ def _ensure_repo() -> dict[str, Any]:
     return {"vault_path": str(config.VAULT_PATH)}
 
 
+def _git_env(cred: dict[str, str]) -> dict[str, str] | None:
+    """配置了 SSH 私钥时，为 git 子进程注入 GIT_SSH_COMMAND（V0.5：无 token 也能推）。"""
+    key = (cred.get("ssh_key") or "").strip()
+    if not key or not Path(key).is_file():
+        return None
+    cmd = (
+        f"ssh -i {key} -o IdentitiesOnly=yes "
+        "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    )
+    env = dict(os.environ)
+    env["GIT_SSH_COMMAND"] = cmd
+    return env
+
+
 def _run(args: list[str], cwd: Path, check: bool = True, cred: dict[str, str] | None = None) -> tuple[str, str]:
     """执行 git 命令；返回 (stdout, stderr)，均经 token 脱敏。"""
     try:
-        proc = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=_TIMEOUT_SEC, check=False)
+        proc = subprocess.run(
+            args, cwd=cwd, capture_output=True, text=True, timeout=_TIMEOUT_SEC, check=False,
+            env=_git_env(cred) if cred else None,
+        )
     except subprocess.SubprocessError as exc:  # timeout / OSError
         raise RuntimeError(f"git 执行失败：{exc}") from exc
     out = proc.stdout or ""
@@ -80,9 +98,15 @@ def _remote_url(cred: dict[str, str]) -> str:
     # V0.4 修复：owner/repo 形式此前被原样返回导致 remote 绑定失败
     if re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
         token = (cred.get("token") or "").strip()
-        if not token:
-            raise RuntimeError("未配置 GitHub token。请先 cm_github_setup 填写私有仓库 token（不会外泄）。")
-        return f"https://x-access-token:{token}@github.com/{repo}.git"
+        if token:
+            return f"https://x-access-token:{token}@github.com/{repo}.git"
+        # V0.5：无 token 但配了 SSH 私钥时走 git@ 协议（仓库需部署对应公钥）
+        ssh_key = (cred.get("ssh_key") or "").strip()
+        if ssh_key:
+            return f"git@github.com:{repo}.git"
+        raise RuntimeError(
+            "未配置 GitHub 推送凭证。请用 GitHub 登录授权，或在控制台「出库 → 高级」填写 Token / SSH 私钥（不会外泄）。"
+        )
     return repo
 
 

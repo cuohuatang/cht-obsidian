@@ -139,3 +139,35 @@ def test_remote_url_passthrough(tmp_vault: Path) -> None:
     from cut_obsidian_mcp.modules import github_sync
     assert github_sync._remote_url({"repo": "git@github.com:a/b.git", "token": "t"}) == "git@github.com:a/b.git"
     assert github_sync._remote_url({"repo": "/tmp/local", "token": "t"}) == "/tmp/local"
+
+
+# ---------- SSH 私钥推送（V0.5） ----------
+
+def test_remote_url_ssh_fallback(tmp_vault: Path) -> None:
+    """无 token 但配了 ssh_key：owner/repo 走 git@ 协议。"""
+    from cut_obsidian_mcp.modules import github_sync
+    url = github_sync._remote_url({"repo": "cuohuatang/brain", "ssh_key": "/data/users/x/.ssh/id_ed25519"})
+    assert url == "git@github.com:cuohuatang/brain.git"
+
+
+def test_remote_url_token_beats_ssh(tmp_vault: Path) -> None:
+    """token 与 ssh_key 同时存在时 token 优先（HTTPS 免 ssh 客户端依赖）。"""
+    from cut_obsidian_mcp.modules import github_sync
+    url = github_sync._remote_url({"repo": "a/b", "token": "ghp_x", "ssh_key": "/k"})
+    assert url.startswith("https://x-access-token:ghp_x@github.com/a/b")
+
+
+def test_remote_url_no_credential_raises(tmp_vault: Path) -> None:
+    from cut_obsidian_mcp.modules import github_sync
+    with pytest.raises(RuntimeError, match="凭证"):
+        github_sync._remote_url({"repo": "a/b"})
+
+
+def test_git_env_injects_ssh_command(tmp_vault: Path) -> None:
+    from cut_obsidian_mcp.modules import github_sync
+    key = tmp_vault / "id_ed25519"
+    key.write_text("PRIVATE KEY", encoding="utf-8")
+    env = github_sync._git_env({"ssh_key": str(key)})
+    assert env is not None and "GIT_SSH_COMMAND" in env and str(key) in env["GIT_SSH_COMMAND"]
+    assert github_sync._git_env({}) is None
+    assert github_sync._git_env({"ssh_key": "/nonexistent/key"}) is None
