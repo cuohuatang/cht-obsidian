@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cut-obsidian-mcp"
-version = "0.4.0"
+version = "0.4.3"
 description = "一体化第二大脑：记忆+纠错+总结+Obsidian嫁接+交接+技能沉淀+GitHub私有仓库实时同步 MCP 服务器（本地、免 API key、全 Agent 通用）"
 readme = "README.md"
 license = { text = "MIT" }

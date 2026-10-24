@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cht-obsidian 配置中心</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --line:#334155; --fg:#e2e8f0; --dim:#94a3b8; --ok:#4ade80; --warn:#fbbf24; --err:#f87171; --acc:#38bdf8; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--fg); font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; padding:24px 16px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  h1 { font-size:22px; margin-bottom:4px; } .sub { color:var(--dim); font-size:13px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .card h2 { font-size:15px; margin-bottom:12px; color:var(--acc); }
+  label { display:block; font-size:13px; font-weight:600; margin:12px 0 4px; }
+  .hint { font-size:12px; color:var(--dim); margin-bottom:6px; line-height:1.7; }
+  .hint a { color:var(--acc); }
+  .hint code { background:#0b1120; padding:1px 6px; border-radius:4px; color:var(--warn); font-size:11px; }
+  input,select,textarea { width:100%; background:#0b1120; border:1px solid var(--line); border-radius:8px; color:var(--fg); padding:10px 12px; font-size:14px; font-family:inherit; }
+  input:focus,textarea:focus,select:focus { outline:none; border-color:var(--acc); }
+  textarea { min-height:110px; font-family:ui-monospace,monospace; font-size:12px; resize:vertical; }
+  .secret-wrap { position:relative; }
+  .secret-wrap input, .secret-wrap textarea { padding-right:44px; }
+  .secret-wrap textarea.blurred { filter:blur(5px); }
+  .eye { position:absolute; right:10px; top:9px; background:none; border:none; cursor:pointer; font-size:18px; padding:4px; margin:0; line-height:1; user-select:none; }
+  .row { display:flex; gap:12px; } .row>*{flex:1;}
+  button { background:var(--acc); color:#04121f; border:none; border-radius:8px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; margin-top:14px; }
+  button.ghost { background:transparent; color:var(--acc); border:1px solid var(--acc); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .btns { display:flex; gap:10px; flex-wrap:wrap; }
+  .msg { margin-top:12px; padding:10px 12px; border-radius:8px; font-size:13px; line-height:1.6; display:none; white-space:pre-wrap; word-break:break-all; }
+  .msg.ok{background:#052e16; color:var(--ok); display:block;} .msg.err{background:#3f1414; color:var(--err); display:block;} .msg.info{background:#0c2436; color:var(--acc); display:block;}
+  .status { font-size:13px; line-height:2; }
+  .status b{color:var(--acc);} .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;}
+  .tag.on{background:#052e16;color:var(--ok);} .tag.off{background:#3f1414;color:var(--err);}
+  details summary{cursor:pointer;color:var(--acc);font-size:13px;}
+  details p{font-size:12px;color:var(--dim);margin:8px 0;line-height:1.8;}
+  /* ── 认证方式三卡片 ── */
+  .auth-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin:8px 0 4px; }
+  .auth-card { background:#0b1120; border:2px solid var(--line); border-radius:10px; padding:14px; cursor:pointer; transition:border-color .15s, transform .1s; }
+  .auth-card:hover { border-color:var(--acc); }
+  .auth-card.sel { border-color:var(--acc); background:#0c2436; }
+  .auth-card.dim { opacity:.92; }
+  .ac-head { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; flex-wrap:wrap; }
+  .ac-title { font-size:14px; font-weight:700; }
+  .ac-icon { font-size:22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧠 cht-obsidian 配置中心</h1>
+  <div class="sub">AI Agent 第二大脑 · GitHub 云端镜像设置 · 修改即时生效，无需重启</div>
+
+  <!-- 登录门 -->
+  <div class="card" id="gate">
+    <h2>🔐 输入访问口令</h2>
+    <div class="hint">这个页面能改你的 GitHub 备份配置，所以上了一把锁，防止陌生人乱动。<b>口令只有一条，找部署这套系统的人（管理员）要就行</b>——发你页面链接的人手里就有。</div>
+    <details style="margin:8px 0"><summary style="cursor:pointer;color:var(--acc);font-size:13px">我自己部署的，口令在哪看？</summary>
+      <div class="hint" style="margin-top:8px">就是 <code>154.12.41.33</code> 这台美国服务器。用 SSH 登上去（端口 3002），执行下面一条命令，输出的那一串就是：<br><code>grep MCP_AUTH_TOKEN /opt/cht-obsidian/.env</code><br>复制 <code>=</code> 号后面的部分粘贴到上面即可。</div>
+    </details>
+    <div class="secret-wrap">
+      <input id="tk" type="password" placeholder="粘贴管理员给你的访问口令">
+      <button class="eye" type="button" onclick="toggleEye(this,'tk')" title="显示/隐藏">🙈</button>
+    </div>
+    <button onclick="unlock()">进入配置</button>
+    <div class="msg" id="gateMsg"></div>
+  </div>
+
+  <div id="main" style="display:none">
+
+    <!-- 当前状态 -->
+    <div class="card">
+      <h2>📊 当前状态</h2>
+      <div class="status" id="status">加载中…</div>
+      <button class="ghost" onclick="loadStatus()">刷新状态</button>
+    </div>
+
+    <!-- GitHub 配置 -->
+    <div class="card">
+      <h2>☁️ 第 1 步：选择认证钥匙（二选一）</h2>
+      <div class="hint">两种都能让 Agent 推送笔记。<b>推荐新手选 Token</b>；会用命令行的选 SSH。</div>
+
+      <div class="auth-grid">
+        <div class="auth-card" data-mode="token" onclick="pickMode('token')">
+          <div class="ac-head"><span class="ac-icon">🔑</span><span class="ac-title">GitHub Token</span><span class="tag on">可推送 ✓</span></div>
+          <div class="hint">最简单：网页上点几下生成一串字符，粘贴进来即可。<b>推荐所有人使用。</b></div>
+        </div>
+        <div class="auth-card" data-mode="ssh" onclick="pickMode('ssh')">
+          <div class="ac-head"><span class="ac-icon">🗝️</span><span class="ac-title">SSH Keys</span><span class="tag on">可推送 ✓</span></div>
+          <div class="hint">密钥对方式：本机生成公私钥，公钥贴 GitHub、私钥贴这里。适合会用命令行的人。</div>
+        </div>
+      </div>
+
+      <!-- Token 模式 -->
+      <div id="tokenSec">
+        <label>🔑 第 2 步：申请 Token（约 2 分钟）</label>
+        <div class="hint">
+          ① 打开申请链接：<a href="https://github.com/settings/personal-access-tokens/new" target="_blank">github.com/settings/personal-access-tokens/new</a>（经典版：<a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a>，勾选 <code>repo</code> 整个分类）<br>
+          ② <b>Token name</b>：随便起名，如 <code>cht-obsidian</code><br>
+          ③ <b>Repository access</b>：选 <b>Only select repositories</b> → 只勾选你的笔记仓库（最小权限更安全）<br>
+          ④ <b>Permissions</b> → <b>Contents 设为 Read and write</b>（其余保持 No access）<br>
+          ⑤ <b>Expiration</b>：建议 90 天或 No expiration<br>
+          ⑥ 点 <b>Generate token</b> → 立刻复制生成的 <code>github_pat_…</code> 长串（只显示这一次！）
+        </div>
+        <label>🔑 第 3 步：粘贴 Token（👁 点眼睛可查看）</label>
+        <div class="hint">令牌只保存在本服务器的 0600 权限文件里，不会回显到状态页、不会进日志。</div>
+        <div class="secret-wrap">
+          <input id="token" type="password" placeholder="github_pat_… 或 ghp_…（首次配置或换令牌时填写）">
+          <button class="eye" type="button" onclick="toggleEye(this,'token')" title="显示/隐藏">🙈</button>
+        </div>
+      </div>
+
+      <!-- SSH 模式 -->
+      <div id="sshSec" style="display:none">
+        <label>🗝️ 第 2 步：本机生成密钥对</label>
+        <div class="hint">终端（Windows 用 PowerShell）执行：<code>ssh-keygen -t ed25519 -C "cht-obsidian"</code>，一路回车。生成两个文件：私钥 <code>~/.ssh/id_ed25519</code>、公钥 <code>~/.ssh/id_ed25519.pub</code>。</div>
+        <label>🗝️ 第 3 步：公钥贴到 GitHub</label>
+        <div class="hint">打开 <a href="https://github.com/settings/keys" target="_blank">github.com/settings/keys</a> → <b>New SSH key</b> → Key type 选 <b>Authentication Key</b> → 粘贴 <code>.pub</code> 公钥内容（一整行，<code>ssh-ed25519</code> 开头）→ Add SSH key。</div>
+        <label>🗝️ 第 4 步：私钥粘贴到这里（👁 点眼睛可查看）</label>
+        <div class="hint">粘贴 <code>~/.ssh/id_ed25519</code> <b>私钥</b>全文（-----BEGIN OPENSSH PRIVATE KEY----- 开头），<b>不是 .pub 公钥</b>！私钥将写入服务器 /data/gitkey（权限 600）。</div>
+        <div class="secret-wrap">
+          <textarea id="sshkey" class="blurred" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;…&#10;-----END OPENSSH PRIVATE KEY-----"></textarea>
+          <button class="eye" type="button" onclick="toggleEye(this,'sshkey',true)" title="显示/隐藏">🙈</button>
+        </div>
+      </div>
+
+      </div>
+
+      <label>GitHub 仓库地址</label>
+      <div class="hint">格式：<code>你的用户名/仓库名</code>，例如 <code>cuohuatang/cut-obsidian-brain</code>。仓库需在 GitHub 上<b>先创建好</b>（建议 Private 私有，里面是你全部笔记）。创建入口：<a href="https://github.com/new" target="_blank">github.com/new</a>（不要勾选任何初始化文件）。</div>
+      <input id="repo" placeholder="cuohuatang/cut-obsidian-brain">
+
+      <label>分支名</label>
+      <div class="hint">笔记推送到仓库的哪个分支，默认 <code>main</code> 即可。</div>
+      <input id="branch" value="main" placeholder="main">
+
+      <div class="btns">
+        <button onclick="save()">💾 保存并绑定仓库</button>
+        <button class="ghost" onclick="testConn()">🔌 测试连接</button>
+      </div>
+      <div class="msg" id="saveMsg"></div>
+    </div>
+
+    <!-- 同步操作 -->
+    <div class="card">
+      <h2>🔄 第 2 大步：手动同步（平时 Agent 会自动推）</h2>
+      <div class="hint">保存配置后，Agent 调用 <code>cm_github_push</code> / <code>cm_brain_finalize</code> 时自动增量推送。电脑端 Obsidian 装 <a href="https://github.com/Vinzent03/obsidian-git" target="_blank">obsidian-git</a> 插件指向同一仓库，即可开机自动拉取，实现多端同步。</div>
+      <div class="btns">
+        <button onclick="doSync('/api/setup/push','推送')">⬆️ 立即推送全部笔记到 GitHub</button>
+        <button class="ghost" onclick="doSync('/api/setup/pull','拉取')">⬇️ 从 GitHub 拉取最新笔记</button>
+      </div>
+      <div class="msg" id="syncMsg"></div>
+    </div>
+
+    <!-- 其他设置说明 -->
+    <div class="card">
+      <h2>⚙️ 其他必要设置（说明）</h2>
+      <details open><summary>这些不用在本页填，原因如下</summary>
+        <p>① <b>笔记库路径</b>：容器内固定为 /data/cut-obsidian/vault，由 docker-compose 管理，改动需重建容器，本页不提供（避免误改丢数据）。<br>
+        ② <b>Agent 连接地址</b>：http://<span class="addr">154.12.41.33</span>:8899/sse + 本页第 0 步的令牌，直接填进你的 MCP 客户端。<br>
+        ③ <b>传输协议</b>：当前为 SSE。改协议需修改 /opt/cht-obsidian/.env 后重启容器，属运维操作。<br>
+        ④ <b>语义聚类阈值</b>：V0.4 默认 0.40 已够用；要调整可在 .env 加 CUT_OBSIDIAN_SEMANTIC_THRESHOLD。</p>
+      </details>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const tk = () => localStorage.getItem('cmtk') || '';
+const hdr = () => ({'Content-Type':'application/json','Authorization':'Bearer '+tk()});
+let MODE = 'token';
+const addr = location.host; document.querySelectorAll('.addr').forEach(e=>e.textContent=addr.split(':')[0]);
+
+function showMsg(id, ok, text){ const el=$(id); el.className='msg '+(ok?'ok':'err'); el.textContent=text; }
+
+/* 眼睛图标：input 切 type，textarea 切模糊 */
+function toggleEye(btn, id, isTextarea){
+  const el = $(id);
+  if(isTextarea){ el.classList.toggle('blurred'); }
+  else { el.type = el.type === 'password' ? 'text' : 'password'; }
+  btn.textContent = ((el.type==='text') || (isTextarea && !el.classList.contains('blurred'))) ? '👁️' : '🙈';
+}
+
+/* 三卡片选择 */
+function pickMode(m){
+  MODE = m;
+  document.querySelectorAll('.auth-card').forEach(c=>c.classList.toggle('sel', c.dataset.mode===m));
+  $('tokenSec').style.display = m==='token' ? 'block' : 'none';
+  $('sshSec').style.display   = m==='ssh'   ? 'block' : 'none';
+
+}
+
+async function unlock(){
+  localStorage.setItem('cmtk', $('tk').value.trim());
+  try{
+    const r = await fetch('/api/setup/status',{headers:hdr()});
+    if(r.status===401){ showMsg('gateMsg',false,'令牌无效，请重新输入'); return; }
+    $('gate').style.display='none'; $('main').style.display='block';
+    renderStatus(await r.json());
+  }catch(e){ showMsg('gateMsg',false,'无法连接服务器：'+e.message); }
+}
+
+async function loadStatus(){ try{ renderStatus(await (await fetch('/api/setup/status',{headers:hdr()})).json()); }catch(e){ showMsg('saveMsg',false,e.message);} }
+
+function renderStatus(d){
+  $('status').innerHTML =
+    '笔记库路径：<b>'+d.vault_path+'</b><br>'+
+    'GitHub 绑定：'+(d.configured?('<span class="tag on">已配置</span> 仓库 <b>'+d.repo+'</b> 分支 <b>'+d.branch+'</b> 认证 <b>'+(d.auth_mode==='ssh'?'🗝️ SSH Keys':'🔑 Token')+'</b>'):'<span class="tag off">未配置</span> 按下方选择一种钥匙')+'<br>'+
+    'git 环境：'+(d.git_ok?'<span class="tag on">正常</span>':'<span class="tag off">缺失</span>')+
+    (d.configured?'<br>凭证预览：<b>'+d.token_masked+'</b>（完整值不回显）':'');
+  if(d.configured){ $('repo').value=d.repo; $('branch').value=d.branch||'main'; pickMode(d.auth_mode==='ssh'?'ssh':'token'); }
+}
+
+async function save(silent){
+  if(!silent) showMsg('saveMsg',true,'保存中…');
+  if(MODE==='gpg'){ if(!silent) showMsg('saveMsg',false,'GPG Keys 不能用于推送认证，请选择 Token 或 SSH Keys。'); return {ok:false,error:'GPG Keys 不能用于推送认证，请选择 Token 或 SSH Keys。'}; }
+  const body={mode:MODE,repo:$('repo').value.trim(),branch:$('branch').value.trim()||'main'};
+  if(!body.repo || !body.repo.includes('/')){ if(!silent) showMsg('saveMsg',false,'请按 用户名/仓库名 格式填写仓库地址'); return {ok:false,error:'请按 用户名/仓库名 格式填写仓库地址'}; }
+  if(MODE==='token'){
+    const t=$('token').value.trim();
+    if(t) body.token=t;
+    else if(!silent && !confirm('未填写新令牌，将沿用已保存的旧令牌，继续？')) return {ok:false,error:'已取消'};
+  } else {
+    body.ssh_key=$('sshkey').value;
+    if(!body.ssh_key.includes('PRIVATE KEY')){ if(!silent) showMsg('saveMsg',false,'SSH 私钥格式不对，应以 -----BEGIN OPENSSH PRIVATE KEY----- 开头（注意别贴成 .pub 公钥）'); return {ok:false,error:'SSH 私钥格式不对'}; }
+  }
+  let d;
+  try{
+    const r=await fetch('/api/setup/save',{method:'POST',headers:hdr(),body:JSON.stringify(body)});
+    d=await r.json();
+  }catch(e){ d={error:'网络错误：'+e.message}; }
+  if(d && d.ok){ 
+    if(!silent){ showMsg('saveMsg',true,'✅ 保存成功！仓库 '+d.repo+' 已绑定（remote: origin，分支 '+d.branch+'）。凭证已写入 0600 文件。'); $('token').value=''; }
+    loadStatus(); return {ok:true,data:d};
+  }
+  if(!silent) showMsg('saveMsg',false,'❌ '+(d&&d.error||'保存失败'));
+  return {ok:false,error:(d&&d.error)||'保存失败'};
+}
+
+async function testConn(){
+  /* 先静默保存（用户常忘点保存），再测试 */
+  showMsg('saveMsg',true,'保存并测试中…（首次连接 GitHub 需几秒）');
+  const s = await save(true);
+  if(!s.ok){ showMsg('saveMsg',false,'❌ 保存失败：'+s.error+'\n\n如果是 Token 问题：确认 Token 填了、且已授权 cuohuatang/obsidian 仓库的 Contents 读写权限。'); return; }
+  const r=await fetch('/api/setup/test',{method:'POST',headers:hdr()}); const d=await r.json();
+  d.ok? showMsg('saveMsg',true,'✅ 连接成功！仓库可达'+(d.head?('，最新提交 '+d.head.slice(0,10)):'（仓库为空或首次推送将创建分支）')) : showMsg('saveMsg',false,'❌ '+d.error+'\n\n常见原因：①Token 未授权这个仓库（Fine-grained token 的 Repository access 里必须选中 cuohuatang/obsidian）②Contents 权限没给 Read and write ③Token 过期 ④SSH 公钥没加到 GitHub');
+}
+
+async function doSync(url,label){
+  showMsg('syncMsg',true,label+'中…');
+  const r=await fetch(url,{method:'POST',headers:hdr()}); const d=await r.json();
+  if(r.ok&&d.ok!==false) showMsg('syncMsg',true,'✅ '+label+'完成'+(d.output?'\n'+d.output:''));
+  else showMsg('syncMsg',false,'❌ '+(d.error||('HTTP '+r.status)));
+}
+
+if(tk()) unlock();
+/* 支持带口令的链接：页面#tk=xxx 时自动填入并进入，用户零操作 */
+(function(){
+  const m = location.hash.match(/tk=([A-Za-z0-9_-]+)/);
+  if(m && !tk()){ $('tk').value = m[1]; unlock(); history.replaceState(null,'',location.pathname); }
+})();
+</script>
+</body>
+</html>

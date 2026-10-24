@@ -1,0 +1,37 @@
+services:
+  cht-obsidian:
+    build:
+      context: .
+    image: cht-obsidian:0.3.0
+    container_name: cht-obsidian
+    restart: unless-stopped
+
+    # 对外端口。HOST_MCP_PORT 在 .env 里改，默认 8899。
+    # 直接暴露公网的前提是 .env 里设了 MCP_AUTH_TOKEN（启动器会强制校验）。
+    # 只想本机/SSH 隧道访问的话，改成 "127.0.0.1:8899:8000" 更稳妥。
+    ports:
+      - "${HOST_MCP_PORT:-8899}:8000"
+
+    # 数据持久化：vault(markdown 真相源) + index.sqlite 都在这里
+    volumes:
+      - ./data:/data
+      # 可选：挂载 SSH key 让容器免 token 访问私有仓库（只读）
+      # - ./keys:/keys:ro
+
+    environment:
+      CUT_OBSIDIAN_HOME: /data/cut-obsidian
+      CUT_OBSIDIAN_VAULT_PATH: /data/cut-obsidian/vault
+      CUT_OBSIDIAN_INDEX_PATH: /data/cut-obsidian/index.sqlite
+
+      MCP_TRANSPORT: ${MCP_TRANSPORT:-streamable-http}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-}
+
+      # GitHub 私有仓库同步（可选）。也可进容器后用 cm_github_setup 写入
+      # /data/cut-obsidian/config.json（0600），比放 .env 更安全。
+      CUT_OBSIDIAN_GITHUB_REPO: ${CUT_OBSIDIAN_GITHUB_REPO:-}
+      CUT_OBSIDIAN_GITHUB_BRANCH: ${CUT_OBSIDIAN_GITHUB_BRANCH:-main}
+      CUT_OBSIDIAN_GITHUB_TOKEN: ${CUT_OBSIDIAN_GITHUB_TOKEN:-}
+
+      TZ: ${TZ:-Asia/Shanghai}
