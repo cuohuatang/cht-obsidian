@@ -42,7 +42,11 @@ def add(
     }
     body = f"## 教训\n{lesson}\n\n## 触发场景\n（待补充 evidence）"
     if links:
-        body += "\n\n## 相关笔记\n" + "\n".join(f"- [[{l}]]" for l in links)
+        rl = vault.resolve_links(links)  # 双链自动修正：短名 → 真实文件路径
+        meta["links"] = rl["resolved"]
+        body += "\n\n## 相关笔记\n" + "\n".join(f"- [[{l}]]" for l in rl["resolved"])
+        if rl["unresolved"]:
+            body += "\n\n> ⚠️ 以下链接未能匹配库内文件，已原样保留：\n> " + "\n> ".join(rl["unresolved"])
     return vault.write_note(rel, body, meta)
 
 

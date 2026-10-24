@@ -42,7 +42,11 @@ def log(
     }
     body = f"## 纠正\n{correction}\n\n## 证据/触发场景\n{evidence or '（待补充）'}\n\n## 是否生效\n待验证"
     if links:
-        body += "\n\n## 相关笔记\n" + "\n".join(f"- [[{l}]]" for l in links)
+        rl = vault.resolve_links(links)  # 双链自动修正：短名 → 真实文件路径
+        meta["links"] = rl["resolved"]
+        body += "\n\n## 相关笔记\n" + "\n".join(f"- [[{l}]]" for l in rl["resolved"])
+        if rl["unresolved"]:
+            body += "\n\n> ⚠️ 以下链接未能匹配库内文件，已原样保留：\n> " + "\n> ".join(rl["unresolved"])
     return vault.write_note(rel, body, meta)
 
 

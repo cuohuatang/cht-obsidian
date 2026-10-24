@@ -29,6 +29,55 @@ def utcnow() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
+def resolve_links(links: list[str] | None) -> dict[str, Any]:
+    """双链自动修正（V0.4）：把不精确的链接写法解析为库内真实笔记路径。
+
+    背景：真实文件名带时间戳+hash 后缀（如 01-流水账/2026-10-18-163607-03b2f2），
+    按 README 示例写短名会生成断链。本函数按以下规则解析（按序命中即停，可审计）：
+      1) 精确命中（含或不含 .md 后缀）
+      2) 文件名（stem）完全一致且唯一
+      3) 归一化后一致（去 -、_、空格，忽略大小写）且唯一
+      4) 链接名是某文件 stem 的子串且唯一命中
+    解析不到的原样保留，并在 unresolved 中报告，绝不静默丢弃。
+    """
+    known = [rel[:-3] for rel, _ in _walk_vault() if rel.endswith(".md")]
+    resolved: list[str] = []
+    unresolved: list[str] = []
+
+    def _norm(s: str) -> str:
+        return re.sub(r"[-_\s]+", "", s).lower()
+
+    for raw in links or []:
+        cand = raw.strip()
+        if not cand:
+            continue
+        if cand.endswith(".md"):
+            cand = cand[:-3]
+        stem = cand.rsplit("/", 1)[-1]
+        target = None
+        if cand in known:
+            target = cand
+        else:
+            exact = [k for k in known if k.rsplit("/", 1)[-1] == stem]
+            if len(exact) == 1:
+                target = exact[0]
+            else:
+                normed = [k for k in known if _norm(k.rsplit("/", 1)[-1]) == _norm(stem)]
+                if len(normed) == 1:
+                    target = normed[0]
+                elif stem:
+                    nstem = _norm(stem)
+                    sub = [k for k in known if nstem and nstem in _norm(k.rsplit("/", 1)[-1])]
+                    if len(sub) == 1:
+                        target = sub[0]
+        if target:
+            resolved.append(target)
+        else:
+            resolved.append(cand)
+            unresolved.append(cand)
+    return {"resolved": resolved, "unresolved": unresolved}
+
+
 def segment(text: str) -> str:
     """jieba 分词 + 过滤非字母数字 token，供 FTS5 索引/查询使用。"""
     tokens = []

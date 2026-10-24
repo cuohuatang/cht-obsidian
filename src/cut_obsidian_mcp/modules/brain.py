@@ -10,8 +10,10 @@
 
 from __future__ import annotations
 
+import math
+import os
 import uuid
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -28,6 +30,45 @@ _GENERIC_TAGS = {"已消化", "general", "通用"}
 
 def _expire_date(days: int = 180) -> str:
     return (date.today() + timedelta(days=days)).isoformat()
+
+
+def _semantic_threshold() -> float:
+    """语义聚类余弦阈值；纯规则可配置，保持可审计。"""
+    try:
+        return float(os.environ.get("CUT_OBSIDIAN_SEMANTIC_THRESHOLD", "0.40"))
+    except ValueError:
+        return 0.40
+
+
+def _tfidf_vectors(candidates: list[dict[str, Any]]) -> list[dict[str, float]]:
+    """标题+正文 jieba 分词后构建 TF-IDF 向量（复用 vault.segment，规则透明可复算）。"""
+    docs = []
+    for c in candidates:
+        text = f"{c['meta'].get('title', '')} {c['content']}"
+        tokens = [t for t in vault.segment(text).split() if len(t) > 1]
+        docs.append(tokens)
+    n = len(docs)
+    df: Counter[str] = Counter()
+    for d in docs:
+        df.update(set(d))
+    vecs: list[dict[str, float]] = []
+    for d in docs:
+        if not d:
+            vecs.append({})
+            continue
+        tf = Counter(d)
+        vecs.append({t: (cnt / len(d)) * math.log((n + 1) / (df[t] + 1)) for t, cnt in tf.items()})
+    return vecs
+
+
+def _cosine(a: dict[str, float], b: dict[str, float]) -> float:
+    if not a or not b:
+        return 0.0
+    common = set(a) & set(b)
+    dot = sum(a[t] * b[t] for t in common)
+    na = math.sqrt(sum(v * v for v in a.values()))
+    nb = math.sqrt(sum(v * v for v in b.values()))
+    return dot / (na * nb) if na and nb else 0.0
 
 
 def _collect_candidates(since_days: int, agent: str | None) -> list[dict[str, Any]]:
@@ -77,6 +118,15 @@ def _cluster(candidates: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
         idxs = list(idxs)
         for i in range(1, len(idxs)):
             union(idxs[0], idxs[i])
+    # 语义聚类增强（V0.4）：在标签聚类之上，对内容做 TF-IDF 余弦相似度，
+    # 相似度 ≥ 阈值（默认 0.40，可用环境变量 CUT_OBSIDIAN_SEMANTIC_THRESHOLD 调整）
+    # 的笔记对也合并到同一簇——解决"无标签/标签不一致但内容同类"的漏聚类问题。
+    vecs = _tfidf_vectors(candidates)
+    for i in range(len(candidates)):
+        for j in range(i + 1, len(candidates)):
+            sim = _cosine(vecs[i], vecs[j])
+            if sim >= _semantic_threshold():
+                union(i, j)
     groups: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for i, c in enumerate(candidates):
         groups[find(i)].append(c)
