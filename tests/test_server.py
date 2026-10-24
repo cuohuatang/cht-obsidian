@@ -1,4 +1,4 @@
-"""服务器骨架测试：26 个工具全部注册（V0.3）。"""
+"""服务器骨架测试：34 个工具全部注册（V0.6）。"""
 
 from __future__ import annotations
 
@@ -39,6 +39,25 @@ def test_all_tools_registered() -> None:
         "cm_brain_finalize",
         "cm_brain_moc",
         "cm_brain_status",
+        # V0.6 自体检 + Harness² 嫁接 8 工具
+        "cm_doctor",
+        "cm_harness2_doctor",
+        "cm_harness2_demo",
+        "cm_harness2_setup",
+        "cm_harness2_check",
+        "cm_harness2_run",
+        "cm_harness2_judge",
+        "cm_harness2_report",
     }
     assert expected <= names, f"缺失工具: {expected - names}"
-    assert len(names) == 26, f"工具总数应为 26，实际 {len(names)}：{sorted(names)}"
+    assert len(names) == 34, f"工具总数应为 34，实际 {len(names)}：{sorted(names)}"
+
+
+def test_usage_resource_registered() -> None:
+    uris = {str(r.uri) for r in asyncio.run(mcp.list_resources())}
+    assert "harness2://usage" in uris
+
+
+def test_instructions_include_standing_orders() -> None:
+    assert "STANDING ORDERS" in (mcp.instructions or "")
+    assert "cm_harness2_run" in (mcp.instructions or "")

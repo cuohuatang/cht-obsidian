@@ -251,7 +251,7 @@ def _build_app(transport: str, path: str):
             _c.VAULT_PATH = v
             _c.INDEX_PATH = idx
             _c.CONFIG_FILE = _user_cfg_file(self.login)
-            vault.init_vault()
+            _v.init_vault()
             return self
 
         def __exit__(self, *a):
@@ -491,6 +491,16 @@ def _build_app(transport: str, path: str):
         _save_user_cfg(login, cfg)
         return _JSON({"ok": True, "mode": "Token" if tok else "SSH 私钥", "auth_mode": cfg["auth_mode"]})
 
+    async def _app_doctor(request):
+        """入库/出库控制台：当前用户环境一键体检（cm_doctor 的 Web 出口，按用户隔离）。"""
+        login = _read_cookie(request)
+        if not login:
+            return _JSON({"error": "未登录"}, status_code=401)
+        _last_seen[login] = _time.time()
+        from cut_obsidian_mcp.modules import harness as _harness
+        with _UserCtx(login):
+            return _JSON({"ok": True, "report": _harness.self_doctor()})
+
     # ── 管理总览（管理员口令） ──
     async def _admin_page(request):
         return FileResponse(_Path(__file__).parent / "admin.html", media_type="text/html")
@@ -517,6 +527,23 @@ def _build_app(transport: str, path: str):
             })
         return _JSON({"users": users, "idle_wipe_min": IDLE_WIPE // 60})
 
+    async def _admin_doctor(request):
+        """管理总览：全局环境体检（默认 vault 上下文）+ 用户级问题计数。"""
+        if request.headers.get("authorization", "") != f"Bearer {token}":
+            return _JSON({"error": "unauthorized"}, status_code=401)
+        from cut_obsidian_mcp.modules import harness as _harness
+        report = _harness.self_doctor()
+        user_issues = 0
+        for d in USERS_ROOT.glob("*"):
+            if not d.is_dir():
+                continue
+            cfg = _load_user_cfg(d.name)
+            if not cfg.get("repo") or not (cfg.get("token") or cfg.get("ssh_key")):
+                user_issues += 1
+        report["user_issues"] = user_issues
+        report["users_total"] = len([d for d in USERS_ROOT.glob("*") if d.is_dir()])
+        return _JSON(report)
+
     multiuser_routes = [
         Route("/auth/login", _auth_login, methods=["GET"]),
         Route("/auth/callback", _auth_cb, methods=["GET"], name="auth_cb"),
@@ -528,8 +555,10 @@ def _build_app(transport: str, path: str):
         Route("/api/app/push", _app_push, methods=["POST"]),
         Route("/api/app/import", _app_import, methods=["POST"]),
         Route("/api/app/key", _app_key, methods=["POST"]),
+        Route("/api/app/doctor", _app_doctor, methods=["GET"]),
         Route("/admin", _admin_page, methods=["GET"]),
         Route("/api/admin/users", _admin_users, methods=["GET"]),
+        Route("/api/admin/doctor", _admin_doctor, methods=["GET"]),
     ]
     if USERS_ROOT.exists() or True:
         USERS_ROOT.mkdir(parents=True, exist_ok=True)

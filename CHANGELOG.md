@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.6.0 · 2026-10-25
+**新增（Harness² 嫁接）**
+- 移植 cuohuatang/harness2（Apache-2.0，Google Research Harness² 框架的 MCP 封装）为内置模块 `modules/harness.py`：
+  - `cm_harness2_doctor/demo/setup/check/run/judge/report` 7 工具：包装 Harness² 6 个 CLI 入口（递归优化 sweep：先 dry_run 预览 → max_tasks=1 小跑 → judge → report），CLI 缺失时返回安装指引而非报错；单次输出超 2 万字符自动截断
+  - `cm_doctor`：cht-obsidian 自身一键体检（vault 可写 / config 0600 / git / 索引 / GitHub 同步配置 / Harness² CLI），分级报告 + 修复建议
+  - `harness2://usage` MCP 资源：完整使用手册随连接可取
+  - MCP instructions 增加 Harness² 常驻指令（触发时机 / 成本闸门 / 参数一致性 / 故障处理 / 闭环沉淀 / 保密铁律）
+- 经验闭环：优化循环产出的"被采纳外壳 + 有证据经验"经 cm_memory_save / cm_lesson_add 沉淀回第二大脑（记忆库 × 优化器）
+- 新增 `scripts/harness2_doctor.sh` 裸机体检脚本与 `THIRD_PARTY_NOTICES.md` 署名文件
+
+**变更**
+- 工具总数 26 → 34；测试 39 → 56 项全绿；版本 0.5.1 → 0.6.0
+- 定位说明：云端多用户版默认不装 Harness² CLI（每用户需自带模型凭证），完整功能在本地 stdio 模式使用
+
 ## 0.5.1 · 2026-10-24
 **新增**
 - 用户控制台改版「入库/出库」双卡片：📥 入库（✍️ 手动记录 / 🤖 从 Agent 采集 / 💬 从微信采集，自动拆条即存即推），📤 出库（仓库绑定 / 立即推送 / 钥匙管理）

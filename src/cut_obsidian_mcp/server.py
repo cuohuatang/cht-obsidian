@@ -1,7 +1,7 @@
-"""cut-obsidian-mcp 服务器入口：MCPServer 注册全部 26 个 cm_ 工具（V0.3）。
+"""cut-obsidian-mcp 服务器入口：MCPServer 注册全部 34 个 cm_ 工具（V0.6）。
 
-V0.3 = 第二大脑：多 Agent 分空间 + 后台自动消化管线（提炼→工作流→标签→双链→MOC）
-+ GitHub 私有仓库实时同步（Obsidian 开机经 obsidian-git 自动拉取）。
+V0.6 = Harness² 嫁接：cm_harness2_* 7 工具（递归优化 Agent 外壳：提示词/护栏/记忆/工具指导）
++ cm_doctor 自体检 + harness2://usage 资源；经验闭环沉淀回第二大脑。
 """
 
 from __future__ import annotations
@@ -11,20 +11,23 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 
 from . import __version__
-from .modules import brain, corrections, github_sync, handoff, lessons, memory, obsidian, skillcraft, summarize
+from .modules import brain, corrections, github_sync, handoff, harness, lessons, memory, obsidian, skillcraft, summarize
+from .modules.harness import STANDING_ORDERS
 
 mcp = MCPServer(
     name="cut-obsidian-mcp",
     instructions=(
         "一体化第二大脑：自动记忆、自动总结、踩坑本(errlore式)、纠错台账(AgentRecall式)、"
         "Obsidian 嫁接、会话交接(session-handoff式)、技能沉淀(session-to-skill式)、"
-        "后台消化(GitHub 私有仓库实时同步 + MOC 双链导航)。全部本地存储、免 API key；"
+        "后台消化(GitHub 私有仓库实时同步 + MOC 双链导航)、Harness² 外壳优化(递归优化提示词/护栏/记忆/工具指导)。全部本地存储、免 API key；"
         "混合检索（BM25 + TF-IDF 向量）。\n"
         "接入任意 Agent（Claude Code/Cursor/Codex/OpenCode/Gemini CLI/豆包工作台等）后：\n"
         "1) 开工前：cm_memory_recall + cm_correction_check + cm_lesson_inject（带上 agent 参数）；\n"
         "2) 工作中：cm_memory_save / cm_lesson_add / cm_correction_log（填 agent 与 category 分类项目）；\n"
         "3) 会话结束：cm_brain_finalize —— 自动周总结 + 技能建议 + 消化管线 + GitHub 实时上传；\n"
-        "4) 首次使用先 cm_vault_init，云端镜像先 cm_github_setup(repo, token, branch)。"
+        "4) 首次使用先 cm_vault_init，云端镜像先 cm_github_setup(repo, token, branch)；\n"
+        "5) 环境存疑先 cm_doctor 一键自体检。\n\n"
+        + STANDING_ORDERS
     ),
 )
 
@@ -206,6 +209,94 @@ def cm_brain_moc(agent: str | None = None) -> dict[str, Any]:
 def cm_brain_status() -> dict[str, Any]:
     """第二大脑统计：笔记数、工作流数、待消化数、GitHub 同步状态。"""
     return brain.status()
+
+
+# ---------- ⑩ 自体检 + Harness² 嫁接（V0.6）----------
+@mcp.tool()
+def cm_doctor() -> dict[str, Any]:
+    """cht-obsidian 一键自体检：vault 可写/config 权限/git/索引/GitHub 同步/Harness² CLI，返回分级报告与修复建议。"""
+    return harness.self_doctor()
+
+
+@mcp.tool()
+def cm_harness2_doctor(workdir: str | None = None) -> str:
+    """Harness² 环境体检：CLI 是否在 PATH、Python≥3.12、uv、.env。跑任何基准前先调用。
+
+    【常驻指令】每个工作会话开始、以及每次优化循环之前，先调用本工具；
+    CLI 缺失时按返回的安装指引处理，停止重试不要空转。
+    """
+    return harness.doctor(workdir)
+
+
+@mcp.tool()
+def cm_harness2_demo(output: str = "runs/demo", k: int = 2, mode: str = "both", timeout: int = 900, workdir: str | None = None) -> str:
+    """运行 Harness² 本地演示（确定性编辑器 + 真实 Python 执行，无需任何模型密钥）。"""
+    return harness.demo(output, k, mode, timeout, workdir)
+
+
+@mcp.tool()
+def cm_harness2_setup(benchmark: str, substrate: str = "oc", dry_run: bool = False, timeout: int = 900, workdir: str | None = None) -> str:
+    """安装某个基准的数据与环境。benchmark: jb(JobBench) | lab(LAB) | wb(WorkBuddy-Bench)。"""
+    return harness.setup(benchmark, substrate, dry_run, timeout, workdir)
+
+
+@mcp.tool()
+def cm_harness2_check(bench: str, subset: str | None = None, substrate: str = "oc", timeout: int = 900, workdir: str | None = None) -> str:
+    """跑基准前的环境检查（judge 是否就绪、任务是否可加载）。bench: jb | lab | wb。"""
+    return harness.check(bench, subset, substrate, timeout, workdir)
+
+
+@mcp.tool()
+def cm_harness2_run(
+    bench: str,
+    k: int = 1,
+    mode: str = "parallel",
+    substrate: str = "oc",
+    subset: str | None = None,
+    only_domains: str = "",
+    max_tasks: int | None = None,
+    split: str = "all",
+    workers: int = 1,
+    seed: int | None = None,
+    dry_run: bool = False,
+    timeout: int = 900,
+    workdir: str | None = None,
+) -> str:
+    """执行一次递归优化 sweep（核心入口，会调用模型、产生费用）。
+
+    【常驻指令】标准动作永远是两步：先 dry_run=true 预览任务流（零成本），
+    确认无误后以 max_tasks=1 小跑，拿到结果再依次调用 cm_harness2_judge 和
+    cm_harness2_report。严禁一步到位全量跑；judge/report 参数必须与本次完全一致。
+    """
+    return harness.run(bench, k, mode, substrate, subset, only_domains, max_tasks, split, workers, seed, dry_run, timeout, workdir)
+
+
+@mcp.tool()
+def cm_harness2_judge(bench: str, k: int = 1, mode: str = "parallel", substrate: str = "oc", subset: str | None = None, seed: int | None = None, timeout: int = 900, workdir: str | None = None) -> str:
+    """对已完成的 sweep 评分（judging）。参数必须与 cm_harness2_run 完全一致。
+
+    【常驻指令】每次 cm_harness2_run 成功结束后必须接着调用本工具，再用
+    cm_harness2_report 汇总——只有 judge+report 完成，本轮经验才会写入改进库。
+    跳过评分 = 白跑。
+    """
+    return harness.judge(bench, k, mode, substrate, subset, seed, timeout, workdir)
+
+
+@mcp.tool()
+def cm_harness2_report(bench: str, k: str = "1", mode: str = "parallel", substrate: str = "oc", subset: str | None = None, timeout: int = 900, workdir: str | None = None) -> str:
+    """汇总评分结果并生成报告。k 接受逗号列表，如 "1,2,3"（对应多次 sweep）。
+
+    【常驻指令】本工具是优化循环的最后一步：judge 完成后必须调用，只有 report
+    产出，本轮经验与结果才落盘归档；随后把被采纳的外壳改动用 cm_memory_save /
+    cm_lesson_add 沉淀回第二大脑（闭环）。
+    """
+    return harness.report(bench, k, mode, substrate, subset, timeout, workdir)
+
+
+@mcp.resource("harness2://usage")
+def harness2_usage() -> str:
+    """Harness² 完整使用手册（安装 / demo / 基准 / 参数 / 成本与安全注意事项）。"""
+    return harness.usage_text()
 
 
 def main() -> None:

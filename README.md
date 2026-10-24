@@ -1,10 +1,11 @@
 # cut-obsidian-mcp
 
-一体化 **第二大脑** MCP 服务器：**自动记忆 + 自动总结 + 踩坑本(errlore式) + 纠错台账(AgentRecall式) + Obsidian 嫁接(obsidian-mcp式) + 会话交接(session-handoff式) + 技能沉淀(session-to-skill式) + GitHub 私有仓库实时同步**。
+一体化 **第二大脑** MCP 服务器：**自动记忆 + 自动总结 + 踩坑本(errlore式) + 纠错台账(AgentRecall式) + Obsidian 嫁接(obsidian-mcp式) + 会话交接(session-handoff式) + 技能沉淀(session-to-skill式) + GitHub 私有仓库实时同步 + Harness² 外壳优化（递归优化提示词/护栏/记忆/工具指导）**。
 免费、免 API key、纯本地，一套工具接入所有支持 MCP 的 Agent（Claude Code / Cursor / Codex / OpenCode / Gemini CLI / 豆包工作台等）。
 
-> 当前状态：**V0.3 已开发完成**（26 工具，GitHub 仓库 `cuohuatang/cht-obsidian-mcp`，tag v0.3.0）。
-> V0.3 核心 = **第二大脑 + 云端镜像**：智能体工作时后台自动消化其各分类项目 → 提炼/总结/萃取成工作流 → 打标签 → 双链 → 实时上传 GitHub 私有仓库 → 本地 Obsidian 开机经 obsidian-git 自动拉取。完整设计见 [DESIGN.md](DESIGN.md)，版本记录见 [CHANGELOG.md](CHANGELOG.md)。
+> 当前状态：**V0.6**（34 工具，GitHub 仓库 `cuohuatang/cht-obsidian`）。
+> V0.3 核心 = **第二大脑 + 云端镜像**：智能体工作时后台自动消化其各分类项目 → 提炼/总结/萃取成工作流 → 打标签 → 双链 → 实时上传 GitHub 私有仓库 → 本地 Obsidian 开机经 obsidian-git 自动拉取。
+> V0.5 起提供**云端多用户版**（GitHub OAuth 登录、每用户隔离、即存即推、即焚），V0.6 **嫁接 Harness²**（Google Research 递归 Agent Harness 优化框架）：`cm_harness2_*` 7 工具 + `cm_doctor` 自体检，优化经验闭环沉淀回第二大脑。完整设计见 [DESIGN.md](DESIGN.md)，版本记录见 [CHANGELOG.md](CHANGELOG.md)，第三方署名见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 快速开始
 
@@ -36,7 +37,7 @@ Claude Code：`claude mcp add cut-obsidian -- uvx cut-obsidian-mcp`，或写入 
 
 环境变量均可编辑：`CUT_OBSIDIAN_HOME`、`CUT_OBSIDIAN_VAULT_PATH`、`CUT_OBSIDIAN_INDEX_PATH`、`CUT_OBSIDIAN_GITHUB_REPO/TOKEN/BRANCH`。token 也可经 `cm_github_setup` 写入本地 0600 文件，不强制放环境变量。
 
-## 工具一览（26 个）
+## 工具一览（34 个）
 
 | 模块 | 工具 |
 |---|---|
@@ -49,6 +50,8 @@ Claude Code：`claude mcp add cut-obsidian -- uvx cut-obsidian-mcp`，或写入 
 | 技能沉淀 | `cm_skill_suggest` `cm_skill_propose` |
 | **GitHub 同步（V0.3）** | `cm_github_setup` `cm_github_push` `cm_github_pull` `cm_github_status` |
 | **第二大脑（V0.3）** | `cm_brain_process` `cm_brain_finalize` `cm_brain_moc` `cm_brain_status` |
+| **自体检（V0.6）** | `cm_doctor` |
+| **Harness² 嫁接（V0.6）** | `cm_harness2_doctor` `cm_harness2_demo` `cm_harness2_setup` `cm_harness2_check` `cm_harness2_run` `cm_harness2_judge` `cm_harness2_report`（另提供 `harness2://usage` 资源） |
 
 ## V0.3 核心玩法：第二大脑 + GitHub 私有仓库实时同步
 

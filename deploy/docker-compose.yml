@@ -2,7 +2,7 @@ services:
   cht-obsidian:
     build:
       context: .
-    image: cht-obsidian:0.3.0
+    image: cht-obsidian:${CHT_IMAGE_TAG:-0.6.0}
     container_name: cht-obsidian
     restart: unless-stopped
 

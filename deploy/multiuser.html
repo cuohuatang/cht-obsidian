@@ -157,6 +157,13 @@
     <div id="view-out" class="view">
       <button class="back" onclick="showHub()">← 返回主页</button>
       <div class="card">
+        <h2>🏥 环境体检</h2>
+        <div class="hint">一键检查你的 vault、凭证权限、GitHub 同步配置是否就绪；有问题会给出修复建议。</div>
+        <button class="ghost" onclick="doctor()">运行体检</button>
+        <div class="msg" id="doctorMsg"></div>
+      </div>
+
+      <div class="card">
         <h2>📦 绑定我的 GitHub 仓库</h2>
         <div class="hint">填 <code>用户名/仓库名</code>（例如 <code>zhangsan/my-brain</code>）。仓库需已存在；不存在？<a href="https://github.com/new" target="_blank">点此创建</a>（建议 Private）。<b>推送凭证默认来自你的 GitHub 登录授权，无需另填钥匙。</b></div>
         <div class="field" style="margin-top:12px"><input id="repo" placeholder="zhangsan/my-brain"></div>
@@ -244,6 +251,18 @@ async function me(){
 }
 
 /* ---------- 出库：绑定 / 推送 / 钥匙 ---------- */
+async function doctor(){
+  showMsg('doctorMsg',true,'体检中…');
+  const r = await fetch('/api/app/doctor');
+  const d = await r.json();
+  if(!d.ok){ showMsg('doctorMsg',false,'❌ '+(d.error||'失败')); return; }
+  const rep = d.report || {};
+  const icon = {ok:'✅',warn:'⚠️',error:'❌'}[rep.level] || '❔';
+  const lines = (rep.checks||[]).map(c=>`${c.ok?'✅':'⚠️'} ${c.name}：${c.detail}`).join('\n');
+  const advice = (rep.advice||[]).length ? '\n\n建议：\n' + rep.advice.map(a=>'• '+a).join('\n') : '';
+  showMsg('doctorMsg', rep.level==='error'?'err':'ok',
+    `${icon} 体检结果：${rep.level}（${rep.summary}）\n${lines}${advice}`);
+}
 async function bind(){
   showMsg('bindMsg',true,'保存中…');
   const r = await fetch('/api/app/bind',{method:'POST',headers:{'Content-Type':'application/json'},
