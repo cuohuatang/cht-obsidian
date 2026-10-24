@@ -125,3 +125,17 @@ def test_cosine_helpers() -> None:
     assert brain._cosine({"a": 1.0}, {"b": 1.0}) == 0.0
     assert brain._cosine({}, {"a": 1.0}) == 0.0
     assert brain._cosine({"a": 1.0}, {"a": 2.0}) == pytest.approx(1.0)
+
+
+# ---------- _remote_url owner/repo 修复（V0.4） ----------
+
+def test_remote_url_owner_repo_builds_https(tmp_vault: Path) -> None:
+    from cut_obsidian_mcp.modules import github_sync
+    url = github_sync._remote_url({"repo": "cuohuatang/brain", "token": "ghp_test123"})
+    assert url == "https://x-access-token:ghp_test123@github.com/cuohuatang/brain.git"
+
+
+def test_remote_url_passthrough(tmp_vault: Path) -> None:
+    from cut_obsidian_mcp.modules import github_sync
+    assert github_sync._remote_url({"repo": "git@github.com:a/b.git", "token": "t"}) == "git@github.com:a/b.git"
+    assert github_sync._remote_url({"repo": "/tmp/local", "token": "t"}) == "/tmp/local"

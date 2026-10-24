@@ -12,6 +12,7 @@ GitHub 私有仓库；本地 Obsidian 开机后经 obsidian-git 插件自动 pul
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -74,12 +75,15 @@ def _remote_url(cred: dict[str, str]) -> str:
     repo = (cred.get("repo") or "").strip()
     if not repo:
         raise RuntimeError("未配置 GitHub 仓库。请先 cm_github_setup(repo, token, branch) 或设置环境变量。")
-    if repo.startswith(("file://", "/", "./", "../")) or "://" not in repo:
-        return repo
-    token = (cred.get("token") or "").strip()
-    if not token:
-        raise RuntimeError("未配置 GitHub token。请先 cm_github_setup 填写私有仓库 token（不会外泄）。")
-    return f"https://x-access-token:{token}@github.com/{repo}.git"
+    if repo.startswith(("file://", "/", "./", "../")) or "://" in repo or repo.startswith("git@"):
+        return repo  # 本地路径或已是完整 URL，直接使用
+    # V0.4 修复：owner/repo 形式此前被原样返回导致 remote 绑定失败
+    if re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
+        token = (cred.get("token") or "").strip()
+        if not token:
+            raise RuntimeError("未配置 GitHub token。请先 cm_github_setup 填写私有仓库 token（不会外泄）。")
+        return f"https://x-access-token:{token}@github.com/{repo}.git"
+    return repo
 
 
 def setup(repo: str, token: str, branch: str = "main") -> dict[str, Any]:

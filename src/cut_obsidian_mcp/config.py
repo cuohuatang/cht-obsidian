@@ -43,8 +43,8 @@ def load_credentials() -> dict[str, str]:
     return {"repo": GITHUB_REPO, "branch": GITHUB_BRANCH, "token": _GITHUB_TOKEN_ENV}
 
 
-def save_credentials(repo: str | None = None, token: str | None = None, branch: str | None = None) -> dict[str, str]:
-    """写入本地凭证文件（0600）。返回值永不包含 token 明文。"""
+def save_credentials(repo: str | None = None, token: str | None = None, branch: str | None = None, **extra: str) -> dict[str, str]:
+    """写入本地凭证文件（0600）。返回值永不包含 token 明文。extra 可携带 auth_mode 等扩展字段。"""
     cred = load_credentials()
     if repo:
         cred["repo"] = repo
@@ -52,6 +52,7 @@ def save_credentials(repo: str | None = None, token: str | None = None, branch: 
         cred["token"] = token
     if branch:
         cred["branch"] = branch
+    cred.update(extra)
     APP_DIR.mkdir(parents=True, exist_ok=True)
     CONFIG_FILE.write_text(json.dumps(cred, ensure_ascii=False, indent=2), encoding="utf-8")
     try:
