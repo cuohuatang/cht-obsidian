@@ -46,7 +46,7 @@ def main():
     mkdirs(REMOTE_DIR + "/repo")
 
     # 1) 上传部署文件
-    for name in ("Dockerfile", "http_server.py", "docker-compose.yml", "setup_ui.html"):
+    for name in ("Dockerfile", "http_server.py", "docker-compose.yml", "setup_ui.html", "multiuser.html", "admin.html"):
         local = os.path.join(LOCAL_DEPLOY, name)
         if os.path.exists(local):
             sftp.put(local, REMOTE_DIR + "/" + name)

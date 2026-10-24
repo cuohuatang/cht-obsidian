@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cht-obsidian · 管理总览</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --line:#334155; --fg:#e2e8f0; --dim:#94a3b8; --ok:#4ade80; --err:#f87171; --acc:#38bdf8; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--fg); font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; padding:24px 16px; }
+  .wrap { max-width:880px; margin:0 auto; }
+  h1 { font-size:22px; margin-bottom:4px; } .sub { color:var(--dim); font-size:13px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .hint { font-size:12px; color:var(--dim); line-height:1.7; }
+  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { color:var(--acc); font-weight:600; }
+  .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;}
+  .tag.on{background:#052e16;color:var(--ok);} .tag.off{background:#3f1414;color:var(--err);} .tag.oauth{background:#0c2436;color:var(--acc);}
+  input { width:100%; max-width:420px; background:#0b1120; border:1px solid var(--line); border-radius:8px; color:var(--fg); padding:10px 12px; font-size:14px; }
+  button { background:var(--acc); color:#04121f; border:none; border-radius:8px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; margin-top:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚙️ 管理总览</h1>
+  <div class="sub">cht-obsidian 多用户实例 · 仅管理员可见（不含任何笔记内容）</div>
+  <div class="card">
+    <div class="hint">输入管理员口令（<code>MCP_AUTH_TOKEN</code>）查看用户列表。</div>
+    <input id="tk" type="password" placeholder="管理员口令">
+    <button onclick="load()">查看用户</button>
+    <div class="msg" id="msg" style="margin-top:12px;padding:10px;border-radius:8px;font-size:13px;display:none"></div>
+  </div>
+  <div class="card" id="list" style="display:none">
+    <table>
+      <thead><tr><th>用户</th><th>绑定仓库</th><th>认证</th><th>临时数据</th><th>最近活跃</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="hint" id="wipe" style="margin-top:12px"></div>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+function fmt(b){ return b<1024 ? b+' B' : b<1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(2)+' MB'; }
+async function load(){
+  const r = await fetch('/api/admin/users',{headers:{Authorization:'Bearer '+$('tk').value}});
+  const el = $('msg'); el.style.display='block';
+  if(r.status===401){ el.style.color='var(--err)'; el.textContent='口令错误'; return; }
+  const d = await r.json();
+  el.style.display='none'; $('list').style.display='block';
+  $('rows').innerHTML = d.users.map(u=>`<tr>
+    <td><b>${u.login}</b></td>
+    <td>${u.repo?u.repo:'<span class="tag off">未绑定</span>'}</td>
+    <td><span class="tag ${u.auth==='oauth'?'oauth':'on'}">${u.auth==='oauth'?'GitHub OAuth':u.auth}</span>${u.has_token?'':' <span class="tag off">无凭证</span>'}</td>
+    <td>${u.vault_bytes?fmt(u.vault_bytes):'<span class="tag on">已即焚</span>'}</td>
+    <td>${u.last_seen_min===null?'—':(u.last_seen_min<60?u.last_seen_min+' 分钟前':(u.last_seen_min/60).toFixed(1)+' 小时前')}</td>
+  </tr>`).join('') || '<tr><td colspan="5">暂无用户</td></tr>';
+  $('wipe').textContent = `即焚策略：用户登出立即清除服务器数据；闲置超过 ${d.idle_wipe_min} 分钟自动清除。`;
+}
+</script>
+</body>
+</html>

@@ -23,8 +23,8 @@ RUN pip install --no-cache-dir \
  && pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple uvicorn \
  && rm -rf /root/.cache/pip
 
-# 启动器 + 配置中心 UI：支持 stdio / sse / streamable-http，并可开启 Bearer Token 鉴权
-COPY http_server.py setup_ui.html /app/
+# 启动器 + 配置中心 UI + 多用户控制台/管理页：支持 stdio / sse / streamable-http，可开启 Bearer Token 鉴权
+COPY http_server.py setup_ui.html multiuser.html admin.html /app/
 
 # 数据与索引放 /data，需挂载宿主机目录持久化
 ENV CUT_OBSIDIAN_HOME=/data/cut-obsidian \
